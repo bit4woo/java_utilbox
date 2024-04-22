@@ -25,7 +25,7 @@ import com.google.common.net.InternetDomainName;
 
 import base.Commons;
 
-public class DomainNameUtils {
+public class DomainUtils {
 
 
 	//可能有xxx.services，xxx.international这样的域名,适当提高长度
@@ -155,6 +155,68 @@ public class DomainNameUtils {
 		return matcher.matches();
 	}
 
+	public static Set<String> grepDomain(String httpResponse) {
+		httpResponse = httpResponse.toLowerCase();
+		//httpResponse = cleanResponse(httpResponse);
+		Set<String> domains = new HashSet<>();
+
+		List<String> lines = Commons.textToLines(httpResponse);
+
+		for (String line:lines) {//分行进行提取，似乎可以提高成功率？
+			line = decodeAll(line);
+			Pattern pDomainNameOnly = Pattern.compile(DomainUtils.GREP_DOMAIN_NAME_AND_PORT_PATTERN);
+			Matcher matcher = pDomainNameOnly.matcher(line);
+			while (matcher.find()) {//多次查找
+				String tmpDomain = matcher.group();
+				if (tmpDomain.startsWith("*.")) {
+					tmpDomain = tmpDomain.replaceFirst("\\*\\.","");//第一个参数是正则
+				}
+				if (tmpDomain.toLowerCase().startsWith("252f")) {//url中的//的URL编码，上面的解码逻辑可能出错
+					tmpDomain = tmpDomain.replaceFirst("252f","");
+				}
+				if (tmpDomain.toLowerCase().startsWith("2f")) {
+					tmpDomain = tmpDomain.replaceFirst("2f","");
+				}
+				domains.add(tmpDomain);
+			}
+		}
+		return domains;
+	}
+
+
+	/**
+	 * 不带端口
+	 * @param httpResponse
+	 * @return
+	 */
+	public static Set<String> grepDomainNoPort(String httpResponse) {
+		httpResponse = httpResponse.toLowerCase();
+		//httpResponse = cleanResponse(httpResponse);
+		Set<String> domains = new HashSet<>();
+
+		List<String> lines = Commons.textToLines(httpResponse);
+
+		for (String line:lines) {//分行进行提取，似乎可以提高成功率？
+			line = decodeAll(line);
+			Pattern pDomainNameOnly = Pattern.compile(DomainUtils.GREP_DOMAIN_NAME_PATTERN);
+			Matcher matcher = pDomainNameOnly.matcher(line);
+			while (matcher.find()) {//多次查找
+				String tmpDomain = matcher.group();
+				if (tmpDomain.startsWith("*.")) {
+					tmpDomain = tmpDomain.replaceFirst("\\*\\.","");//第一个参数是正则
+				}
+				if (tmpDomain.toLowerCase().startsWith("252f")) {//url中的//的URL编码，上面的解码逻辑可能出错
+					tmpDomain = tmpDomain.replaceFirst("252f","");
+				}
+				if (tmpDomain.toLowerCase().startsWith("2f")) {
+					tmpDomain = tmpDomain.replaceFirst("2f","");
+				}
+				domains.add(tmpDomain);
+			}
+		}
+		return domains;
+	}
+
 
 	//http://www.xbill.org/dnsjava/dnsjava-current/examples.html
 	/**
@@ -219,6 +281,30 @@ public class DomainNameUtils {
 		}
 	}
 
+	public static Set<String> grepDomain(String httpResponse) {
+		httpResponse = httpResponse.toLowerCase();
+		//httpResponse = cleanResponse(httpResponse);
+		Set<String> domains = new HashSet<>();
+		//"^([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}$"
+		final String DOMAIN_NAME_PATTERN = "([A-Za-z0-9-*]{1,63}(?<!-)\\.)+[A-Za-z]{2,6}";
+		//加*号是为了匹配 类似 *.baidu.com的这种域名记录。
+
+		String[] lines = httpResponse.split("\r\n");
+
+		for (String line:lines) {//分行进行提取，似乎可以提高成功率？
+			Pattern pDomainNameOnly = Pattern.compile(DOMAIN_NAME_PATTERN);
+			Matcher matcher = pDomainNameOnly.matcher(line);
+			while (matcher.find()) {//多次查找
+				String tmpDomain = matcher.group();
+				if (tmpDomain.startsWith("*.")) {
+					tmpDomain = tmpDomain.replaceFirst("\\*\\.","");//第一个参数是正则
+				}
+				domains.add(tmpDomain);
+			}
+		}
+		return domains;
+	}
+
 	/**
 	 * 
 	 * @param domain
@@ -280,7 +366,7 @@ public class DomainNameUtils {
 	 * @return
 	 */
 	public static String getRootDomain(String inputDomain) {
-		inputDomain = DomainNameUtils.clearDomainWithoutPort(inputDomain);
+		inputDomain = DomainUtils.clearDomainWithoutPort(inputDomain);
 		try {
 			String rootDomain = InternetDomainName.from(inputDomain).topPrivateDomain().toString();
 			return rootDomain;
@@ -437,6 +523,84 @@ public class DomainNameUtils {
 		}
 	}
 
+
+
+	/**
+	 * 构造函数，输入解析
+	 * @param inputHost 如果想要指定自定义端口，传入类似baidu.com:8888的形式即可
+	 * @return
+	 */
+	public DomainToURLs(String inputHost){
+		try {
+			inputHost = inputHost.trim();
+
+			if (inputHost.contains(":")) {//处理带有端口号的域名
+				String tmpport = inputHost.substring(inputHost.indexOf(":") + 1);
+				port = Integer.parseInt(tmpport);
+				String tmphost = inputHost.substring(0, inputHost.indexOf(":"));
+				if (IPAddressUtils.isValidIP(tmphost) || DomainUtils.isValidDomain(tmphost)) {
+					this.host = tmphost;
+				}
+			}else {
+				if (IPAddressUtils.isValidIP(inputHost) || DomainUtils.isValidDomain(inputHost)) {
+					host = inputHost;
+					port = -1;
+				}
+			}
+		} catch (NumberFormatException e) {
+			e.printStackTrace();
+		}
+	}
+
+	//将域名或IP拼接成URL
+	public Set<URL> getUrls(){
+		Set<URL> result = new HashSet<URL>();
+		if (host == null) return result;
+		try{
+			result.add(new URL(String.format("http://%s:%s/",host,80)));
+			result.add(new URL(String.format("https://%s:%s/",host,443)));
+
+			if (port == -1 || port == 80 || port == 443){
+				//Nothing to do;
+			}else{
+				result.add(new URL(String.format("http://%s:%s/",host,port)));
+
+				result.add(new URL(String.format("https://%s:%s/",host,port)));
+			}
+		}catch (Exception e){
+			e.printStackTrace();
+		}
+		return result;
+	}
+
+
+
+	public static String cleanDomain(String domain) {
+		if (domain == null){
+			return null;
+		}
+		domain = domain.toLowerCase().trim();
+		if (domain.startsWith("http://")|| domain.startsWith("https://")) {
+			try {
+				domain = new URL(domain).getHost();
+			} catch (MalformedURLException e) {
+				return null;
+			}
+		}else {
+			if (domain.contains(":")) {//处理带有端口号的域名
+				domain = domain.substring(0,domain.indexOf(":"));
+			}
+		}
+
+		if (domain.endsWith(".")) {
+			domain = domain.substring(0,domain.length()-1);
+		}
+
+		return domain;
+	}
+
+
+
 	public static void testWildCard(){
 		System.out.println(isMatchWildCardDomain("*.baidu.com","www.baidu.com"));
 		System.out.println(isMatchWildCardDomain("*.seller.*.example.*","xxx.xxx.seller.xxx.example.com"));
@@ -452,6 +616,9 @@ public class DomainNameUtils {
 		System.out.println(isValidWildCardDomain("*xxx*.baidu.com"));
 		System.out.println(isValidWildCardDomain("*.*"));
 	}
+
+
+
 
 	public static void main(String[] args) {
 		//System.out.println(isWhiteListTDL("test.example.co.th","example.com"));

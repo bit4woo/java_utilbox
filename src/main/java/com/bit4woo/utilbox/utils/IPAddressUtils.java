@@ -8,6 +8,8 @@ import org.apache.commons.net.util.SubnetUtils;
 import org.apache.commons.net.util.SubnetUtils.SubnetInfo;
 
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class IPAddressUtils {
 
@@ -301,6 +303,195 @@ public class IPAddressUtils {
 
 		return ipRange.contains(inputIPAddress);
 	}
+
+
+	public static List<String> grepIPAndPort(String httpResponse) {
+		Set<String> IPSet = new HashSet<>();
+		String[] lines = httpResponse.split("\r\n");
+
+		for (String line:lines) {
+			String pattern = "\\d{1,3}(?:\\.\\d{1,3}){3}(?::\\d{1,5})?";
+			Pattern pt = Pattern.compile(pattern);
+			Matcher matcher = pt.matcher(line);
+			while (matcher.find()) {//多次查找
+				String tmpIP = matcher.group();
+				IPSet.add(tmpIP);
+			}
+		}
+
+		List<String> tmplist= new ArrayList<>(IPSet);
+		Collections.sort(tmplist);
+		return tmplist;
+	}
+
+
+	public static List<String> grepIP(String httpResponse) {
+		Set<String> IPSet = new HashSet<>();
+		String[] lines = httpResponse.split("\r\n");
+
+		Pattern pt = Pattern.compile(IP_ADDRESS_STRING);
+		for (String line:lines) {
+			Matcher matcher = pt.matcher(line);
+			while (matcher.find()) {//多次查找
+				String tmpIP = matcher.group();
+				IPSet.add(tmpIP);
+			}
+		}
+
+		List<String> tmplist= new ArrayList<>(IPSet);
+		Collections.sort(tmplist);
+		return tmplist;
+	}
+
+
+
+
+	/**
+	 * 会发现如下类型的IP，是有效的IP地址，但是实际情况却不会有人这么写。
+	 * 应当从我们的正则中剔除
+	 * PING 181.002.245.007 (181.2.245.7): 56 data bytes
+	 * @param httpResponse
+	 * @return
+	 */
+	public static List<String> grepIP(String httpResponse) {
+		Set<String> IPSet = new HashSet<>();
+		List<String> lines = Commons.textToLines(httpResponse);
+
+		for (String line:lines) {
+			Matcher matcher = PatternsFromAndroid.IP_ADDRESS.matcher(line);
+			while (matcher.find()) {//多次查找
+				String tmpIP = matcher.group();
+				if (IPAddressUtils.isValidIP(tmpIP)) {
+					IPSet.add(tmpIP);
+				}
+			}
+		}
+
+		List<String> tmplist= new ArrayList<>(IPSet);
+		//Collections.sort(tmplist);
+		return tmplist;
+	}
+
+	public static List<String> grepPrivateIP(String httpResponse) {
+		Set<String> IPSet = new HashSet<>();
+		List<String> lines = Commons.textToLines(httpResponse);
+
+		for (String line:lines) {
+			Matcher matcher = PatternsFromAndroid.IP_ADDRESS.matcher(line);
+			while (matcher.find()) {//多次查找
+				String tmpIP = matcher.group();
+				if (IPAddressUtils.isValidIP(tmpIP) && IPAddressUtils.isPrivateIPv4(tmpIP)) {
+					IPSet.add(tmpIP);
+				}
+			}
+		}
+
+		List<String> tmplist= new ArrayList<>(IPSet);
+		//Collections.sort(tmplist);
+		return tmplist;
+	}
+
+
+	public static List<String> grepPublicIP(String httpResponse) {
+		Set<String> IPSet = new HashSet<>();
+		List<String> lines = Commons.textToLines(httpResponse);
+
+		for (String line:lines) {
+			Matcher matcher = PatternsFromAndroid.IP_ADDRESS.matcher(line);
+			while (matcher.find()) {//多次查找
+				String tmpIP = matcher.group();
+				if (IPAddressUtils.isValidIP(tmpIP) && !IPAddressUtils.isPrivateIPv4(tmpIP)) {
+					IPSet.add(tmpIP);
+				}
+			}
+		}
+
+		List<String> tmplist= new ArrayList<>(IPSet);
+		//Collections.sort(tmplist);
+		return tmplist;
+	}
+
+	/**
+	 *  误报太高，不划算。不再使用
+	 * @param httpResponse
+	 * @return
+	 */
+	@Deprecated
+	public static List<String> grepIPAndPort(String httpResponse) {
+		Set<String> IPSet = new HashSet<>();
+		String[] lines = httpResponse.split("(\r\n|\r|\n)");
+
+		for (String line:lines) {
+			String pattern = "\\d{1,3}(?:\\.\\d{1,3}){3}(?::\\d{1,5})?";
+			Pattern pt = Pattern.compile(pattern);
+			Matcher matcher = pt.matcher(line);
+			while (matcher.find()) {//多次查找
+				String tmpIP = matcher.group();
+				if (IPAddressUtils.isValidIP(tmpIP)) {
+					IPSet.add(tmpIP);
+				}
+			}
+		}
+
+		List<String> tmplist= new ArrayList<>(IPSet);
+		//Collections.sort(tmplist);
+		return tmplist;
+	}
+
+
+	/**
+	 *  查找masscan结果中的port
+	 * @param httpResponse
+	 * @return
+	 */
+	public static List<String> grepPort(String httpResponse) {
+		Set<String> resultSet = new HashSet<>();
+		List<String> lines = Commons.textToLines(httpResponse);
+		String REGEX_masscan_port = "(\\d{1,6})";
+		Pattern pattern = Pattern.compile(REGEX_masscan_port);
+
+		Matcher matcher = pattern.matcher(httpResponse);
+		while (matcher.find()) {//多次查找
+			String item = matcher.group(1);
+			try {
+				int port = Integer.parseInt(item);
+				if (port >=0 && port <=65535) {
+					resultSet.add(item);
+				}
+			}catch(Exception e) {
+
+			}
+		}
+
+		List<String> tmplist= new ArrayList<>(resultSet);
+		//Collections.sort(tmplist);
+		return tmplist;
+	}
+
+	/**
+	 * 提取网段信息 比如143.11.99.0/24
+	 * @param httpResponse
+	 * @return
+	 */
+	public static List<String> grepSubnet(String httpResponse) {
+		Set<String> IPSet = new HashSet<>();
+		String[] lines = httpResponse.split("(\r\n|\r|\n)");
+
+		for (String line:lines) {
+			String pattern = "\\d{1,3}(?:\\.\\d{1,3}){3}(?:/\\d{1,2})?";
+			Pattern pt = Pattern.compile(pattern);
+			Matcher matcher = pt.matcher(line);
+			while (matcher.find()) {//多次查找
+				String tmpIP = matcher.group();
+				IPSet.add(tmpIP);
+			}
+		}
+
+		List<String> tmplist= new ArrayList<>(IPSet);
+		//Collections.sort(tmplist);
+		return tmplist;
+	}
+
 
 	public static void test3() {
 		Set<String>  a= new HashSet();

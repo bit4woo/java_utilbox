@@ -11,6 +11,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang3.StringUtils;
 import org.xbill.DNS.ARecord;
 import org.xbill.DNS.Lookup;
 import org.xbill.DNS.NSRecord;
@@ -20,16 +21,14 @@ import org.xbill.DNS.Resolver;
 import org.xbill.DNS.SimpleResolver;
 import org.xbill.DNS.ZoneTransferIn;
 
-import com.bit4woo.utilbox.burp.BurpExtender;
 import com.google.common.net.InternetDomainName;
-
-import base.Commons;
 
 public class DomainUtils {
 
 
     //可能有xxx.services，xxx.international这样的域名,适当提高长度
     public static final String VAILD_DOMAIN_NAME_PATTERN = "^((?!-)[A-Za-z0-9-]{1,63}(?<!-)\\.)+[A-Za-z]{2,11}(?::\\d{1,5})?$";
+    public static final String VAILD_DOMAIN_NAME_NO_PORT_PATTERN = "^((?!-)[A-Za-z0-9-]{1,63}(?<!-)\\.)+[A-Za-z]{2,11}$";
     //final String DOMAIN_NAME_PATTERN = "([A-Za-z0-9-]{1,63}(?<!-)\\.)+[A-Za-z]{2,6}";//-this.state.scroll 这种也会被认为是合法的。
 
     public static final String GREP_DOMAIN_NAME_PATTERN = "((?!-)[A-Za-z0-9-]{1,63}(?<!-)\\.)+[A-Za-z]{2,11}";
@@ -52,12 +51,21 @@ public class DomainUtils {
 
 
     //域名校验和域名提取还是要区分对待
-    public static boolean isValidDomain(String domain) {
+    public static boolean isValidDomainPort(String domain) {
+        return isValidDomainPrivate(domain, VAILD_DOMAIN_NAME_PATTERN);
+    }
+
+
+    public static boolean isValidDomainNoPort(String domain) {
+        return isValidDomainPrivate(domain, VAILD_DOMAIN_NAME_NO_PORT_PATTERN);
+    }
+
+    private static boolean isValidDomainPrivate(String domain, String patternStr) {
         if (null == domain) {
             return false;
         }
 
-        Pattern pattern = Pattern.compile(VAILD_DOMAIN_NAME_PATTERN);
+        Pattern pattern = Pattern.compile(patternStr);
         Matcher matcher = pattern.matcher(domain);
         boolean formateOk = matcher.matches();
         if (formateOk) {
@@ -159,45 +167,12 @@ public class DomainUtils {
         return TextUtils.grepWithRegex(text, GREP_DOMAIN_NAME_PATTERN);
     }
 
-    /**
-     * 不带端口
-     *
-     * @param httpResponse
-     * @return
-     */
-    //TODO 进行到这里了
-    public static Set<String> grepDomainNoPortxxx(String httpResponse) {
-        httpResponse = httpResponse.toLowerCase();
-        //httpResponse = cleanResponse(httpResponse);
-        Set<String> domains = new HashSet<>();
-
-        List<String> lines = TextUtils.textToLines(httpResponse);
-
-        for (String line : lines) {//分行进行提取，似乎可以提高成功率？
-            line = TextUtils.decodeAll(line);
-            Pattern pDomainNameOnly = Pattern.compile(DomainUtils.GREP_DOMAIN_NAME_PATTERN);
-            Matcher matcher = pDomainNameOnly.matcher(line);
-            while (matcher.find()) {//多次查找
-                String tmpDomain = matcher.group();
-                if (tmpDomain.startsWith("*.")) {
-                    tmpDomain = tmpDomain.replaceFirst("\\*\\.", "");//第一个参数是正则
-                }
-                if (tmpDomain.toLowerCase().startsWith("252f")) {//url中的//的URL编码，上面的解码逻辑可能出错
-                    tmpDomain = tmpDomain.replaceFirst("252f", "");
-                }
-                if (tmpDomain.toLowerCase().startsWith("2f")) {
-                    tmpDomain = tmpDomain.replaceFirst("2f", "");
-                }
-                domains.add(tmpDomain);
-            }
-        }
-        return domains;
+    public static List<String> grepPort(String text) {
+        return TextUtils.grepWithRegex(text, "(\\d{1,6})");
     }
 
-
-    //http://www.xbill.org/dnsjava/dnsjava-current/examples.html
-
     /**
+     * http://www.xbill.org/dnsjava/dnsjava-current/examples.html
      * 返回数据格式如下
      * {IP=[69.171.234.48], CDN=[www.google.com.]}
      *
@@ -205,7 +180,7 @@ public class DomainUtils {
      * @param server
      * @return
      */
-    public static HashMap<String, Set<String>> dnsquery(String domain, String server) {
+    public static HashMap<String, Set<String>> dnsQuery(String domain, String server) {
         HashMap<String, Set<String>> result = new HashMap<>();
         Set<String> IPset = new HashSet<>();
         Set<String> CDNSet = new HashSet<>();
@@ -221,7 +196,7 @@ public class DomainUtils {
         try {
             Resolver resolver = null;
             Lookup lookup = new Lookup(domain, org.xbill.DNS.Type.A);
-            if (server != null && IPAddressUtils.isValidIP(server)) {
+            if (IPAddressUtils.isValidIPv4(server)) {
                 resolver = new SimpleResolver(server);
                 lookup.setResolver(resolver);
             }
@@ -229,8 +204,8 @@ public class DomainUtils {
 
             if (lookup.getResult() == Lookup.SUCCESSFUL) {
                 Record[] records = lookup.getAnswers();
-                for (int i = 0; i < records.length; i++) {
-                    ARecord a = (ARecord) records[i];
+                for (Record record : records) {
+                    ARecord a = (ARecord) record;
                     String ip = a.getAddress().getHostAddress();
                     String CName = a.getAddress().getHostName();
                     if (ip != null) {
@@ -243,11 +218,11 @@ public class DomainUtils {
             } else if (lookup.getResult() == Lookup.TRY_AGAIN) {
                 if (resolver == null) {
                     System.out.println("DNS Query Failed with default server, try with 8.8.8.8");
-                    return dnsquery(domain, "8.8.8.8");
+                    return dnsQuery(domain, "8.8.8.8");
                 }
-                if (server == "8.8.8.8") {
+                if (server.equals("8.8.8.8")) {
                     System.out.println("DNS Query Failed with 8.8.8.8, try with 223.6.6.6");
-                    return dnsquery(domain, "223.6.6.6");
+                    return dnsQuery(domain, "223.6.6.6");
                 }
             }
             result.put("IP", IPset);
@@ -262,21 +237,21 @@ public class DomainUtils {
 
 
     /**
+     * 获取域名的权威服务器
+     *
      * @param domain
      * @param server 可以为null
      * @return
      */
-    public static Set<String> GetAuthoritativeNameServer(String domain, String server) {
-        Set<String> NameServerSet = new HashSet<String>();
-        if (domain == null || IPAddressUtils.isValidIP(domain)) {//目标是一个IP
-            return NameServerSet;
+    public static List<String> GetAuthServer(String domain, String server) {
+        List<String> result = new ArrayList<>();
+        if (StringUtils.isEmpty(domain) || IPAddressUtils.isValidIPv4(domain)) {//目标是一个IP
+            return result;
         }
         try {
-
-            Resolver resolver = null;
             Lookup lookup = new Lookup(domain, org.xbill.DNS.Type.NS);
-            if (server != null && IPAddressUtils.isValidIP(server)) {
-                resolver = new SimpleResolver(server);
+            if (IPAddressUtils.isValidIPv4(server) || DomainUtils.isValidDomainPort(server)) {
+                Resolver resolver = new SimpleResolver(server);
                 lookup.setResolver(resolver);
             }
             lookup.run();
@@ -286,31 +261,29 @@ public class DomainUtils {
                 for (int i = 0; i < records.length; i++) {
                     NSRecord a = (NSRecord) records[i];
                     String Nserver = a.getTarget().toString();
-                    if (Nserver != null) {
-                        NameServerSet.add(Nserver);
+                    if (StringUtils.isNotEmpty(Nserver)) {
+                        result.add(Nserver);
                     }
                 }
             }
-            return NameServerSet;
-
+            return result;
         } catch (Exception e) {
             e.printStackTrace();
-            return NameServerSet;
+            return result;
         }
     }
 
     public static List<String> ZoneTransferCheck(String domain, String NameServer) {
-        List<String> Result = new ArrayList<String>();
+        List<String> result = new ArrayList<>();
         try {
             ZoneTransferIn zone = ZoneTransferIn.newAXFR(new Name(domain), NameServer, null);
             zone.run();
-            Result = zone.getAXFR();
-            BurpExtender.getStdout().println("!!! " + NameServer + " is zoneTransfer vulnerable for domain " + domain + " !");
-            System.out.print(Result);
+            result = zone.getAXFR();
+            return result;
         } catch (Exception e1) {
-            BurpExtender.getStdout().println(String.format("[Server:%s Domain:%s] %s", NameServer, domain, e1.getMessage()));
+
         }
-        return Result;
+        return result;
     }
 
 
@@ -323,8 +296,7 @@ public class DomainUtils {
     public static String getRootDomain(String inputDomain) {
         inputDomain = DomainUtils.clearDomainWithoutPort(inputDomain);
         try {
-            String rootDomain = InternetDomainName.from(inputDomain).topPrivateDomain().toString();
-            return rootDomain;
+            return InternetDomainName.from(inputDomain).topPrivateDomain().toString();
         } catch (Exception e) {
             //InternetDomainName.from("www.jd.local").topPrivateDomain()//Not under a public suffix: www.jd.local
             Set<String> customPublicSuffixes = new HashSet<>();
@@ -338,8 +310,7 @@ public class DomainUtils {
                 if (customPublicSuffixes.contains(suffix)) {
                     int secondLastIndex = inputDomain.lastIndexOf(".", lastIndex - 1);
                     if (secondLastIndex != -1 && secondLastIndex + 1 <= inputDomain.length()) {
-                        String rootDomain = inputDomain.substring(secondLastIndex + 1);
-                        return rootDomain;
+                        return inputDomain.substring(secondLastIndex + 1);
                     }
                 }
             }
@@ -399,8 +370,8 @@ public class DomainUtils {
                     return false;
                 }
                 //去除后缀然后比较
-                String tmpDomain = Commons.replaceLast(domain, suffixOfDomain, "");
-                String tmpRootdomain = Commons.replaceLast(rootDomain, suffixOfRootDomain, "");
+                String tmpDomain = TextUtils.replaceLast(domain, suffixOfDomain, "");
+                String tmpRootdomain = TextUtils.replaceLast(rootDomain, suffixOfRootDomain, "");
                 if (tmpDomain.endsWith("." + tmpRootdomain) || tmpDomain.equalsIgnoreCase(tmpRootdomain)) {
                     return true;
                 }
@@ -483,37 +454,28 @@ public class DomainUtils {
 
 
     /**
-     * 构造函数，输入解析
+     * 将域名或IP拼接成URL
      *
-     * @param inputHost 如果想要指定自定义端口，传入类似baidu.com:8888的形式即可
+     * @param host 如果想要指定自定义端口，传入类似baidu.com:8888的形式即可
      * @return
      */
-    public DomainToURLs(String inputHost) {
-        try {
-            inputHost = inputHost.trim();
-
-            if (inputHost.contains(":")) {//处理带有端口号的域名
-                String tmpport = inputHost.substring(inputHost.indexOf(":") + 1);
-                port = Integer.parseInt(tmpport);
-                String tmphost = inputHost.substring(0, inputHost.indexOf(":"));
-                if (IPAddressUtils.isValidIP(tmphost) || DomainUtils.isValidDomain(tmphost)) {
-                    this.host = tmphost;
-                }
-            } else {
-                if (IPAddressUtils.isValidIP(inputHost) || DomainUtils.isValidDomain(inputHost)) {
-                    host = inputHost;
-                    port = -1;
-                }
-            }
-        } catch (NumberFormatException e) {
-            e.printStackTrace();
-        }
-    }
-
-    //将域名或IP拼接成URL
-    public Set<URL> getUrls() {
-        Set<URL> result = new HashSet<URL>();
+    public List<URL> toURLs(String host) {
+        List<URL> result = new ArrayList<>();
         if (host == null) return result;
+
+        host = host.trim();
+        int port = -1;
+        if (IPAddressUtils.isValidIPPort(host) || DomainUtils.isValidDomainPort(host)) {
+            try {
+                if (host.contains(":")) {
+                    host = host.split(":")[0];
+                    port = Integer.parseInt(host.split(":")[1]);
+                }
+            } catch (NumberFormatException e) {
+                return result;
+            }
+        }
+
         try {
             result.add(new URL(String.format("http://%s:%s/", host, 80)));
             result.add(new URL(String.format("https://%s:%s/", host, 443)));
@@ -522,38 +484,12 @@ public class DomainUtils {
                 //Nothing to do;
             } else {
                 result.add(new URL(String.format("http://%s:%s/", host, port)));
-
                 result.add(new URL(String.format("https://%s:%s/", host, port)));
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
         return result;
-    }
-
-
-    public static String cleanDomain(String domain) {
-        if (domain == null) {
-            return null;
-        }
-        domain = domain.toLowerCase().trim();
-        if (domain.startsWith("http://") || domain.startsWith("https://")) {
-            try {
-                domain = new URL(domain).getHost();
-            } catch (MalformedURLException e) {
-                return null;
-            }
-        } else {
-            if (domain.contains(":")) {//处理带有端口号的域名
-                domain = domain.substring(0, domain.indexOf(":"));
-            }
-        }
-
-        if (domain.endsWith(".")) {
-            domain = domain.substring(0, domain.length() - 1);
-        }
-
-        return domain;
     }
 
 
@@ -576,7 +512,7 @@ public class DomainUtils {
 
     public static void main(String[] args) {
         //System.out.println(isWhiteListTDL("test.example.co.th","example.com"));
-        System.out.println(isValidDomain("test-api.xxx.services:22"));
+        System.out.println(isValidDomainPort("test-api.xxx.services:22"));
         //testWild();
 
         //System.out.println(isValidWildCardDomain("aaaaaaaaa-aaaaaaaaaaaaaaa-aaaaaaaaaaaaaa.www1.baidu.com"));

@@ -1,5 +1,7 @@
 package com.bit4woo.utilbox.utils;
 
+import org.apache.commons.lang3.StringEscapeUtils;
+
 import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -12,6 +14,7 @@ public class TextUtils {
 
     /**
      * 先解Unicode，再解url，应该才是正确操作吧
+     *
      * @param line
      * @return
      */
@@ -46,10 +49,10 @@ public class TextUtils {
                     int currentlen = line.length();
                     if (oldlen > currentlen) {
                         continue;
-                    }else {
+                    } else {
                         break;
                     }
-                }catch(Exception e) {
+                } catch (Exception e) {
                     //e.printStackTrace(BurpExtender.getStderr());
                     break;//即使出错，也要进行后续的查找
                 }
@@ -64,10 +67,10 @@ public class TextUtils {
                     int currentlen = line.length();
                     if (oldlen > currentlen) {
                         continue;
-                    }else {
+                    } else {
                         break;
                     }
-                }catch(Exception e) {
+                } catch (Exception e) {
                     //e.printStackTrace(BurpExtender.getStderr());
                     break;//即使出错，也要进行后续的查找
                 }
@@ -78,14 +81,13 @@ public class TextUtils {
     }
 
 
-
     public static boolean needUnicodeConvert(String str) {
         Pattern pattern = Pattern.compile("(\\\\u(\\p{XDigit}{4}))");
         //Pattern pattern = Pattern.compile("(\\\\u([A-Fa-f0-9]{4}))");//和上面的效果一样
         Matcher matcher = pattern.matcher(str.toLowerCase());
-        if (matcher.find() ){
+        if (matcher.find()) {
             return true;
-        }else {
+        } else {
             return false;
         }
     }
@@ -94,14 +96,12 @@ public class TextUtils {
         Pattern pattern = Pattern.compile("(%(\\p{XDigit}{2}))");
 
         Matcher matcher = pattern.matcher(str.toLowerCase());
-        if (matcher.find() ){
+        if (matcher.find()) {
             return true;
-        }else {
+        } else {
             return false;
         }
     }
-
-
 
 
     public static List<String> grepChinese(String inputText) {
@@ -121,12 +121,12 @@ public class TextUtils {
     /**
      * 提取两个字符串之间的内容
      *
-     * @param input   输入字符串
-     * @param start   开始标记
-     * @param end     结束标记
+     * @param input 输入字符串
+     * @param start 开始标记
+     * @param end   结束标记
      * @return 提取的字符串内容
      */
-    public static List<String> grepBetween(String start,String end,String inputText) {
+    public static List<String> grepBetween(String start, String end, String inputText) {
         // 使用正则表达式匹配中文字符
         String regex = Pattern.quote(start) + "(.*?)" + Pattern.quote(end);
         Pattern pattern = Pattern.compile(regex, Pattern.DOTALL);
@@ -144,13 +144,14 @@ public class TextUtils {
 
     /**
      * 换行符的可能性有三种，都必须考虑到
+     *
      * @param input
      * @return
      */
-    public static List<String> textToLines(String input){
+    public static List<String> textToLines(String input) {
         String[] lines = input.split("(\r\n|\r|\n)", -1);
         List<String> result = new ArrayList<String>();
-        for(String line: lines) {
+        for (String line : lines) {
             line = line.trim();
             if (!line.equalsIgnoreCase("")) {
                 result.add(line.trim());
@@ -161,6 +162,7 @@ public class TextUtils {
 
     /**
      * 正则表达式提取
+     *
      * @param text
      * @param regex
      * @param caseSensitive
@@ -192,12 +194,13 @@ public class TextUtils {
 
     /**
      * 默认忽略大小写，单行匹配
+     *
      * @param text
      * @param regex
      * @return
      */
     public static List<String> grepWithRegex(String text, String regex) {
-        return grepWithRegex(text,regex,false,false);
+        return grepWithRegex(text, regex, false, false);
     }
 
     public static String replaceLast(String string, String toReplace, String replacement) {
@@ -213,11 +216,42 @@ public class TextUtils {
 
 
     /**
+     * 文本和正则是否匹配，主要用于格式校验，比如 isValidDomain,isValidEmail等等
+     *
+     * @param text
+     * @param regex
+     * @param caseSensitive
+     * @param multipleLine
+     * @return
+     */
+    public static boolean isRegexMatch(String text, String regex, boolean caseSensitive, boolean multipleLine) {
+        if (null == text || null == regex) {
+            return false;
+        }
+
+        int flags = 0;
+        if (!caseSensitive) {
+            flags |= Pattern.CASE_INSENSITIVE;
+        }
+        if (multipleLine) {
+            flags |= Pattern.DOTALL;
+        }
+
+        Pattern pattern = Pattern.compile(regex, flags);
+        Matcher matcher = pattern.matcher(text);
+        return matcher.matches();
+    }
+
+    public static Boolean isRegexMatch(String text, String regex) {
+        return isRegexMatch(text, regex, false, false);
+    }
+    /**
      * 获取随机字符串
+     *
      * @param length
      * @return
      */
-    public static String getRandomString(int length) {
+    public static String getRandomStr(int length) {
         String str = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890";
         Random random = new Random();
         char[] text = new char[length];
@@ -260,18 +294,17 @@ public class TextUtils {
     }
 
 
-
-    public static boolean isNumeric(String str){
-        for(int i=str.length();--i>=0;){
-            int chr=str.charAt(i);
-            if(chr<48 || chr>57) {
+    public static boolean isNumeric(String str) {
+        for (int i = str.length(); --i >= 0; ) {
+            int chr = str.charAt(i);
+            if (chr < 48 || chr > 57) {
                 return false;
             }
         }
         return true;
     }
 
-    public static List<String> removePrefixAndSuffix(List<String> input,String Prefix,String Suffix) {
+    public static List<String> removePrefixAndSuffix(List<String> input, String Prefix, String Suffix) {
         ArrayList<String> result = new ArrayList<String>();
         if (Prefix == null && Suffix == null) {
             return result;
@@ -285,7 +318,7 @@ public class TextUtils {
             }
 
             List<String> content = input;
-            for (String item:content) {
+            for (String item : content) {
                 if (item.startsWith(Prefix)) {
                     //https://stackoverflow.com/questions/17225107/convert-java-string-to-string-compatible-with-a-regex-in-replaceall
                     String tmp = Pattern.quote(Prefix);//自动实现正则转义
@@ -309,7 +342,7 @@ public class TextUtils {
         return new StringBuffer(str).reverse().toString();
     }
 
-    public static List<Integer> allIndexesOf(String word,String guess) {
+    public static List<Integer> allIndexesOf(String word, String guess) {
         List<Integer> result = new ArrayList<Integer>();
         int index = word.indexOf(guess);
         while (index >= 0) {

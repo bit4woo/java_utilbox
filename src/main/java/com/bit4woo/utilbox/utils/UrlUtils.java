@@ -18,17 +18,7 @@ import java.util.regex.Pattern;
 public class UrlUtils {
     private final URL url;
 
-    public static final String URL_Regex = "(?:\"|')"
-            + "("
-            + "((?:[a-zA-Z]{1,10}://|//)[^\"'/]{1,}\\.[a-zA-Z]{2,}[^\"']{0,})"
-            + "|"
-            + "((?:/|\\.\\./|\\./)[^\"'><,;| *()(%%$^/\\\\\\[\\]][^\"'><,;|()]{1,})"
-            + "|"
-            + "([a-zA-Z0-9_\\-/]{1,}/[a-zA-Z0-9_\\-/]{1,}\\.(?:[a-zA-Z]{1,4}|action)(?:[\\?|/][^\"|']{0,}|))"
-            + "|"
-            + "([a-zA-Z0-9_\\-]{1,}\\.(?:php|asp|aspx|jsp|json|action|html|js|txt|xml)(?:\\?[^\"|']{0,}|))"
-            + ")"
-            + "(?:\"|')";
+    public static final String URL_Regex = "(?:\"|')" + "(" + "((?:[a-zA-Z]{1,10}://|//)[^\"'/]{1,}\\.[a-zA-Z]{2,}[^\"']{0,})" + "|" + "((?:/|\\.\\./|\\./)[^\"'><,;| *()(%%$^/\\\\\\[\\]][^\"'><,;|()]{1,})" + "|" + "([a-zA-Z0-9_\\-/]{1,}/[a-zA-Z0-9_\\-/]{1,}\\.(?:[a-zA-Z]{1,4}|action)(?:[\\?|/][^\"|']{0,}|))" + "|" + "([a-zA-Z0-9_\\-]{1,}\\.(?:php|asp|aspx|jsp|json|action|html|js|txt|xml)(?:\\?[^\"|']{0,}|))" + ")" + "(?:\"|')";
 
     public static void main(String[] args) throws MalformedURLException {
         String aaa = "https://api.example.vn:443/Execute#1653013013763";
@@ -192,8 +182,7 @@ public class UrlUtils {
             int port = url.getPort();//不包含端口时返回-1
             String path = url.getPath();
 
-            if ((port == 80 && protocol.equalsIgnoreCase("http"))
-                    || (port == 443 && protocol.equalsIgnoreCase("https"))) {
+            if ((port == 80 && protocol.equalsIgnoreCase("http")) || (port == 443 && protocol.equalsIgnoreCase("https"))) {
                 String oldHost = url.getHost() + ":" + url.getPort();
                 urlString = urlString.replaceFirst(oldHost, host);
             }
@@ -209,151 +198,26 @@ public class UrlUtils {
     }
 
     public static List<String> grepUrls(String text) {
-        List<String> result = new ArrayList<>();
-        //TODO
-
-        return result;
+        return TextUtils.grepWithRegex(text, URL_Regex);
     }
-
-
-    //https://stackoverflow.com/questions/163360/regular-expression-to-match-urls-in-java
-    //https://github.com/aosp-mirror/platform_frameworks_base/blob/master/core/java/android/util/Patterns.java
-    public static List<String> grepURL(String httpResponse) {
-        httpResponse = httpResponse.toLowerCase();
-        Set<String> URLs = new HashSet<>();
-
-        String[] lines = httpResponse.split("\r\n");
-
-        Pattern pt = Pattern.compile(URL_Regex);
-        for (String line:lines) {//分行进行提取，似乎可以提高成功率？PATH_AND_QUERY
-            Matcher matcher = pt.matcher(line);
-            while (matcher.find()) {//多次查找
-                String url = matcher.group();
-                URLs.add(url);
-            }
-        }
-
-        List<String> tmplist= new ArrayList<>(URLs);
-        return tmplist;
-    }
-
-
-    //https://stackoverflow.com/questions/163360/regular-expression-to-match-urls-in-java
-    //https://github.com/aosp-mirror/platform_frameworks_base/blob/master/core/java/android/util/Patterns.java
-    /**
-     *
-     * @param httpResponse
-     * @return
-     */
-    public static List<String> grepURL(String httpResponse) {
-        //httpResponse = httpResponse.toLowerCase();URL是大小写敏感的。这会对URL有影响，造成服务端不识别
-        Set<String> URLs = new HashSet<>();
-
-        String[] lines = httpResponse.split("\r\n");
-
-        //https://github.com/GerbenJavado/LinkFinder/blob/master/linkfinder.py
-        String regex_str = "(?:\"|')"
-                + "("
-                + "((?:[a-zA-Z]{1,10}://|//)[^\"'/]{1,}\\.[a-zA-Z]{2,}[^\"']{0,})"
-                + "|"
-                + "((?:/|\\.\\./|\\./)[^\"'><,;| *()(%%$^/\\\\\\[\\]][^\"'><,;|()]{1,})"
-                + "|"
-                + "([a-zA-Z0-9_\\-/]{1,}/[a-zA-Z0-9_\\-/]{1,}\\.(?:[a-zA-Z]{1,4}|action)(?:[\\?|/][^\"|']{0,}|))"
-                + "|"
-                + "([a-zA-Z0-9_\\-]{1,}\\.(?:php|asp|aspx|jsp|json|action|html|js|txt|xml)(?:\\?[^\"|']{0,}|))"
-                + ")"
-                + "(?:\"|')";
-
-        String regex_str1= "[a-zA-Z0-9_\\-/]{1,}/[a-zA-Z0-9_\\-.]{1,}";//处理不是/开头的urlpath
-        //regex_str = Pattern.quote(regex_str);
-        Pattern pt = Pattern.compile(regex_str);
-        Pattern pt1 = Pattern.compile(regex_str1);
-
-        for (String line:lines) {//分行进行提取，似乎可以提高成功率？PATH_AND_QUERY
-            line = decodeAll(line);
-
-            Matcher matcher = pt.matcher(line);
-            while (matcher.find()) {//多次查找
-                String url = matcher.group();
-                URLs.add(url);
-            }
-
-            //这部分提取的是含有协议头的完整URL地址
-            matcher = PatternsFromAndroid.WEB_URL.matcher(line);
-            while (matcher.find()) {//多次查找
-                String url = matcher.group();
-                //即使是www.www也会被认为是URL（应该是被认作了主机名或文件名），所以必须过滤
-                if (url.toLowerCase().startsWith("http://")
-                        ||url.toLowerCase().startsWith("https://")
-                        ||url.toLowerCase().startsWith("rtsp://")
-                        ||url.toLowerCase().startsWith("ftp://")){
-                    URLs.add(url);
-                }
-            }
-        }
-
-        List<String> tmplist= new ArrayList<>(URLs);
-        //Collections.sort(tmplist);
-        tmplist = Commons.removePrefixAndSuffix(tmplist,"\"","\"");
-        tmplist = Commons.removePrefixAndSuffix(tmplist,"\'","\'");
-        return tmplist;
-    }
-
-
-    /**
-     * 误报较多，却有时候有用
-     * @param httpResponse
-     * @return
-     */
-    public static List<String> grepURL1(String httpResponse) {
-        //httpResponse = httpResponse.toLowerCase();//URL是大小写敏感的。这会对URL有影响，造成服务端不识别
-        Set<String> URLs = new HashSet<>();
-
-        String[] lines = httpResponse.split("\r\n");
-
-        String regex_str1= "[a-zA-Z0-9_\\-/]{1,}/[a-zA-Z0-9_\\-.]{1,}";//处理不是/开头的urlpath
-        Pattern pt1 = Pattern.compile(regex_str1);
-
-        for (String line:lines) {//分行进行提取，似乎可以提高成功率？PATH_AND_QUERY
-            line = decodeAll(line);
-
-            Matcher matcher = pt1.matcher(line);
-            while (matcher.find()) {//多次查找
-                String url = matcher.group();
-                if (url.length()>=5) {//简单过滤，减少误报
-                    URLs.add(url);
-                }
-            }
-        }
-
-        List<String> tmplist= new ArrayList<>(URLs);
-        //Collections.sort(tmplist);
-        tmplist = Commons.removePrefixAndSuffix(tmplist,"\"","\"");
-        tmplist = Commons.removePrefixAndSuffix(tmplist,"\'","\'");
-        return tmplist;
-    }
-
-
-
 
     /**
      * 对于信息收集来说，没有用的文件
      * js是有用的
      * pdf\doc\excel等也是有用的，可以收集到其中的域名
      * rar\zip文件即使其中包含了有用信息，是无法直接读取的
+     *
      * @param urlpath
      * @return
      */
     public static boolean uselessExtension(String urlpath) {
         String extensions = "css|jpeg|gif|jpg|png|rar|zip|svg|jpeg|ico|woff|woff2|ttf|otf|vue";
         String[] extList = extensions.split("\\|");
-        for ( String item:extList) {
-            if(urlpath.endsWith("."+item)) {
+        for (String item : extList) {
+            if (urlpath.endsWith("." + item)) {
                 return true;
             }
         }
         return false;
     }
-
-
 }

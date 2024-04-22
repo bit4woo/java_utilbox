@@ -1,15 +1,11 @@
 package com.bit4woo.utilbox.burp;
 
 import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
-
-import com.bit4woo.utilbox.utils.Common;
 
 import burp.IExtensionHelpers;
 import burp.IHttpRequestResponse;
@@ -17,6 +13,7 @@ import burp.IHttpService;
 import burp.IParameter;
 import burp.IRequestInfo;
 import burp.IResponseInfo;
+import com.bit4woo.utilbox.utils.ByteArrayUtils;
 
 /**
  * source code: https://github.com/bit4woo/burp-api-common/blob/master/src/main/java/burp/HelperPlus.java
@@ -314,7 +311,7 @@ public class HelperPlus {
                 bodyOffset = analyzeResponse.getBodyOffset();
             }
         } else {
-            bodyOffset = Common.BytesIndexOf("\r\n\r\n".getBytes(), requestOrResponse);
+            bodyOffset = ByteArrayUtils.BytesIndexOf("\r\n\r\n".getBytes(), requestOrResponse);
             bodyOffset = bodyOffset + 4;
         }
         return Arrays.copyOfRange(requestOrResponse, bodyOffset, requestOrResponse.length);
@@ -697,30 +694,6 @@ public class HelperPlus {
             throw new Exception("HTTP authentication must be Basic");
 
         return parts[1];
-    }
-
-    public static IHttpRequestResponse doRequest(URL url,String cookie) {
-        IExtensionHelpers helpers = BurpExtender.getCallbacks().getHelpers();
-
-        byte[] byteRequest = helpers.buildHttpRequest(url);//GET
-
-        if (cookie !=null) {
-            byteRequest = Commons.buildCookieRequest(helpers,cookie,byteRequest);
-        }
-
-        IHttpService service = helpers.buildHttpService(url.getHost(),url.getPort(),url.getProtocol());
-        IHttpRequestResponse https_Messageinfo = BurpExtender.getCallbacks().makeHttpRequest(service, byteRequest);
-        return https_Messageinfo;
-    }
-
-    public static IHttpRequestResponse doRequest(String url,String cookie) {
-        try {
-            URL Url = new URL(url);
-            return doRequest(Url,cookie);
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-            return null;
-        }
     }
 
     private static void test1() {

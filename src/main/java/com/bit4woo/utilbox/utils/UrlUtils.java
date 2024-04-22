@@ -18,6 +18,18 @@ import java.util.regex.Pattern;
 public class UrlUtils {
     private final URL url;
 
+    public static final String URL_Regex = "(?:\"|')"
+            + "("
+            + "((?:[a-zA-Z]{1,10}://|//)[^\"'/]{1,}\\.[a-zA-Z]{2,}[^\"']{0,})"
+            + "|"
+            + "((?:/|\\.\\./|\\./)[^\"'><,;| *()(%%$^/\\\\\\[\\]][^\"'><,;|()]{1,})"
+            + "|"
+            + "([a-zA-Z0-9_\\-/]{1,}/[a-zA-Z0-9_\\-/]{1,}\\.(?:[a-zA-Z]{1,4}|action)(?:[\\?|/][^\"|']{0,}|))"
+            + "|"
+            + "([a-zA-Z0-9_\\-]{1,}\\.(?:php|asp|aspx|jsp|json|action|html|js|txt|xml)(?:\\?[^\"|']{0,}|))"
+            + ")"
+            + "(?:\"|')";
+
     public static void main(String[] args) throws MalformedURLException {
         String aaa = "https://api.example.vn:443/Execute#1653013013763";
         String bbb = "https://api.example.vn/Execute#1653013013763";

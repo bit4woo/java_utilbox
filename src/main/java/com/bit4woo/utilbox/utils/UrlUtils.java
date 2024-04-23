@@ -1,19 +1,8 @@
 package com.bit4woo.utilbox.utils;
 
-import burp.IHttpRequestResponse;
-import burp.IHttpService;
-import burp.IRequestInfo;
-
 import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class UrlUtils {
     private final URL url;

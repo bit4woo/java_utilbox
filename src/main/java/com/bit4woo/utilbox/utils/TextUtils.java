@@ -4,7 +4,6 @@ import org.apache.commons.lang3.StringEscapeUtils;
 
 import java.net.URLDecoder;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.regex.Matcher;

@@ -14,6 +14,7 @@ import burp.IParameter;
 import burp.IRequestInfo;
 import burp.IResponseInfo;
 import com.bit4woo.utilbox.utils.ByteArrayUtils;
+import com.bit4woo.utilbox.utils.CharsetUtils;
 
 /**
  * source code: https://github.com/bit4woo/burp-api-common/blob/master/src/main/java/burp/HelperPlus.java
@@ -682,6 +683,23 @@ public class HelperPlus {
             return null;
         }
     }
+    
+	public String detectCharset(boolean isRequest, byte[] requestOrResponse){
+		
+		String contentType = getHeaderValueOf(isRequest,requestOrResponse,"Content-Type");
+
+		//1、尝试从contentTpye中获取
+		if (contentType != null){
+			if (contentType.toLowerCase().contains("charset=")) {
+				String tmpcharSet = contentType.toLowerCase().split("charset=")[1];
+				if (tmpcharSet != null && tmpcharSet.length() >0) {
+					return tmpcharSet;
+				}
+			}
+		}
+		
+		return CharsetUtils.detectCharset(requestOrResponse);
+	}
 
     public String getHTTPBasicCredentials(IHttpRequestResponse messageInfo) throws Exception {
         String authHeader = getHeaderValueOf(true, messageInfo, "Authorization").trim();

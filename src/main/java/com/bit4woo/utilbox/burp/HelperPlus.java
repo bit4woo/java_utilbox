@@ -700,6 +700,17 @@ public class HelperPlus {
 		
 		return CharsetUtils.detectCharset(requestOrResponse);
 	}
+	
+	
+    public boolean isJSON(byte[] content,boolean isRequest) {
+        if (isRequest) {
+            IRequestInfo requestInfo = helpers.analyzeRequest(content);
+            return requestInfo.getContentType() == IRequestInfo.CONTENT_TYPE_JSON;
+        } else {
+            IResponseInfo responseInfo = helpers.analyzeResponse(content);
+            return responseInfo.getInferredMimeType().equals("JSON");
+        }
+    }
 
     public String getHTTPBasicCredentials(IHttpRequestResponse messageInfo) throws Exception {
         String authHeader = getHeaderValueOf(true, messageInfo, "Authorization").trim();

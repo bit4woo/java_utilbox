@@ -1,14 +1,12 @@
 package com.bit4woo.utilbox.utils;
 
-import java.io.UnsupportedEncodingException;
-import java.nio.charset.Charset;
-
-import com.bit4woo.utilbox.burp.HelperPlus;
-
-import burp.IExtensionHelpers;
-import org.apache.commons.io.input.BOMInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
+import java.util.Map;
+
+import org.apache.commons.io.input.BOMInputStream;
 
 public class CharsetUtils {
 
@@ -19,6 +17,11 @@ public class CharsetUtils {
 	public static String getSystemCharSet() {
 		return Charset.defaultCharset().toString();
 	}
+	
+	public static boolean isValidCharset(String charsetName) {
+        Map<String, Charset> charsets = Charset.availableCharsets();
+        return charsets.keySet().contains(charsetName);
+    }
 
 	/**
 	 * 进行响应包的编码转换。
@@ -42,6 +45,7 @@ public class CharsetUtils {
 		return covertCharSet(content,null,newCharset);
 	}
 	
+	
 	public static String detectCharset(byte[] bytes){
         try {
 			ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
@@ -53,5 +57,15 @@ public class CharsetUtils {
 			e.printStackTrace();
 			return null;
 		}
+    }
+	
+    public static void main(String[] args) {
+        Map<String, Charset> charsets = Charset.availableCharsets();
+        
+        // 打印所有字符编码集的规范名称
+        System.out.println("Available Charsets:");
+        for (String name : charsets.keySet()) {
+            System.out.println(name);
+        }
     }
 }

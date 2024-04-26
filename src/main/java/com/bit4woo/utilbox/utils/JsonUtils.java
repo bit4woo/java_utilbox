@@ -14,7 +14,7 @@ public class JsonUtils {
 	public JsonUtils() {
 		// TODO Auto-generated constructor stub
 	}
-	
+
 
 	public static boolean isInt(String input) {
 		try {
@@ -97,7 +97,7 @@ public class JsonUtils {
 			return JSONString+payload;
 		}
 	}
-	
+
 
 	public static ArrayList<String> grepValueFromJson(String jsonString,String keyName) throws Exception {
 		ArrayList<String> result = new ArrayList<String>();
@@ -160,5 +160,39 @@ public class JsonUtils {
 			}
 		}
 		return true;
+	}
+
+
+	/**
+	 * JSON美化，会自动转换Unicode
+	 * @param jsonString
+	 * @return
+	 */
+	public static String pretty(String jsonString) {
+		try {
+			// 将 JSON 字符串解析为 JSONObject
+			JSONObject jsonObject = new JSONObject(jsonString);
+			// 将 JSONObject 格式化为美化后的 JSON 字符串
+			String prettyJsonString = jsonObject.toString(4); // 使用 4 个空格缩进
+			return prettyJsonString;
+		} catch (JSONException e) {
+			try {
+				JSONArray jsonArray = new JSONArray(jsonString);
+				// 将 JSONObject 格式化为美化后的 JSON 字符串
+				String prettyJsonString = jsonArray.toString(4); // 使用 4 个空格缩进
+				return prettyJsonString;
+			} catch (JSONException e1) {
+				//e1.printStackTrace();
+			}
+		}
+		return jsonString;
+	}
+
+
+
+	public static void main(String[] args) {
+		String aaa = "{\"country\":\"\\u65b0\\u52a0\\u5761\",\"province\":\"\\u65b0\\u52a0\\u5761\",\"city\":\"\\u65b0\\u52a0\\u5761\",\"updated_at\":\"2024-03-27\",\"is_web\":\"是\",\"as_org\":\"亚马逊\",\"isp\":\"亚马逊\"}";
+		System.out.println(aaa);
+		System.out.println(pretty(aaa));
 	}
 }

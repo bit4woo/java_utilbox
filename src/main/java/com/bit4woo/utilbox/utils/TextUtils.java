@@ -90,6 +90,7 @@ public class TextUtils {
             return false;
         }
     }
+  
 
     public static boolean needURLConvert(String str) {
         Pattern pattern = Pattern.compile("(%(\\p{XDigit}{2}))");

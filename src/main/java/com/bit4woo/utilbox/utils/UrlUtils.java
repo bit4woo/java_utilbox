@@ -27,7 +27,7 @@ public class UrlUtils {
         }
     }
 
-    UrlUtils(String urlStr) throws MalformedURLException {
+    public UrlUtils(String urlStr) throws MalformedURLException {
         this.url = new URL(urlStr);
     }
 

@@ -7,14 +7,17 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
+
+import com.bit4woo.utilbox.utils.ByteArrayUtils;
+import com.bit4woo.utilbox.utils.CharsetUtils;
+
 import burp.IExtensionHelpers;
 import burp.IHttpRequestResponse;
 import burp.IHttpService;
 import burp.IParameter;
 import burp.IRequestInfo;
 import burp.IResponseInfo;
-import com.bit4woo.utilbox.utils.ByteArrayUtils;
-import com.bit4woo.utilbox.utils.CharsetUtils;
 
 /**
  * source code: https://github.com/bit4woo/burp-api-common/blob/master/src/main/java/burp/HelperPlus.java
@@ -692,8 +695,8 @@ public class HelperPlus {
 		if (contentType != null){
 			if (contentType.toLowerCase().contains("charset=")) {
 				String tmpcharSet = contentType.toLowerCase().split("charset=")[1];
-				if (tmpcharSet != null && tmpcharSet.length() >0) {
-					return tmpcharSet;
+				if (StringUtils.isNotEmpty(tmpcharSet)) {
+					return CharsetUtils.getCharsetName(tmpcharSet);
 				}
 			}
 		}

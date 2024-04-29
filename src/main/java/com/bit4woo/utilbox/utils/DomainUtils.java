@@ -459,13 +459,13 @@ public class DomainUtils {
      * @param host 如果想要指定自定义端口，传入类似baidu.com:8888的形式即可
      * @return
      */
-    public List<URL> toURLs(String host) {
+    public static List<URL> toURLs(String host) {
         List<URL> result = new ArrayList<>();
         if (host == null) return result;
 
         host = host.trim();
         int port = -1;
-        if (IPAddressUtils.isValidIPPort(host) || DomainUtils.isValidDomainPort(host)) {
+        if (IPAddressUtils.isValidIPv4Port(host) || DomainUtils.isValidDomainPort(host)) {
             try {
                 if (host.contains(":")) {
                     host = host.split(":")[0];

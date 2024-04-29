@@ -1,13 +1,13 @@
 package com.bit4woo.utilbox.utils;
 
-import org.apache.commons.lang3.StringEscapeUtils;
-
 import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.apache.commons.lang3.StringEscapeUtils;
 
 public class TextUtils {
 

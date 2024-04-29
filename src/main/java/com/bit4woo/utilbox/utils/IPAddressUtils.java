@@ -1,29 +1,41 @@
 package com.bit4woo.utilbox.utils;
 
-import inet.ipaddr.AddressStringException;
-import inet.ipaddr.IPAddress;
-import inet.ipaddr.IPAddressSeqRange;
-import inet.ipaddr.IPAddressString;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.net.util.SubnetUtils;
 import org.apache.commons.net.util.SubnetUtils.SubnetInfo;
 
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import inet.ipaddr.AddressStringException;
+import inet.ipaddr.IPAddress;
+import inet.ipaddr.IPAddressSeqRange;
+import inet.ipaddr.IPAddressString;
 
+/**
+ *
+ */
 public class IPAddressUtils {
 
-    private static final String Grep_IP_ADDRESS_STRING =
+    private static final String GREP_IP_ADDRESS_STRING_NO_PORT =
             "((25[0-5]|2[0-4][0-9]|[0-1][0-9]{2}|[1-9][0-9]|[1-9])\\.(25[0-5]|2[0-4]"
                     + "[0-9]|[0-1][0-9]{2}|[1-9][0-9]|[1-9]|0)\\.(25[0-5]|2[0-4][0-9]|[0-1]"
                     + "[0-9]{2}|[1-9][0-9]|[1-9]|0)\\.(25[0-5]|2[0-4][0-9]|[0-1][0-9]{2}"
                     + "|[1-9][0-9]|[0-9]))";
+    
+    private static final String GREP_IP_ADDRESS_STRING_WITH_PORT =
+    		GREP_IP_ADDRESS_STRING_NO_PORT+"(?::\\\\d{1,5})?";
 
-    public static boolean isPrivateIPv4(String ipAddress) {
+    public static boolean isPrivateIPv4NoPort(String ipAddress) {
         try {
             // 验证IP地址的格式
-            if (!isValidIPv4(ipAddress)) {
+            if (!isValidIPv4NoPort(ipAddress)) {
                 return false;
             }
 
@@ -47,76 +59,8 @@ public class IPAddressUtils {
         return false;
     }
 
-    public static boolean isPublicIPv4(String ipAddress) {
-        return isValidIPv4(ipAddress) && !isPrivateIPv4(ipAddress);
-    }
-
-    public static boolean isPrivateIPv6(String ipAddress) {
-        try {
-            // 验证IPv6地址的格式
-            if (!isValidIPv6(ipAddress)) {
-                return false;
-            }
-
-            String[] ipParts = ipAddress.trim().split(":");
-            String firstBlock = ipParts[0].toLowerCase(); // 将第一个块转换为小写字母，以方便比较
-            String prefix = firstBlock.substring(0, 2);
-
-            // 检查IPv6地址的范围
-            if (firstBlock.equals("fe80") ||
-                    firstBlock.equals("fc00") ||
-                    firstBlock.equals("fd00") ||
-                    (prefix.equals("fc") && firstBlock.length() >= 4) ||
-                    (prefix.equals("fd") && firstBlock.length() >= 4)) {
-                return true;
-            }
-        } catch (Exception ex) {
-            return false;
-        }
-
-        return false;
-    }
-
-
-    public static boolean isValidIPv6(String ipAddress) {
-        if (ipAddress == null || ipAddress.isEmpty()) {
-            return false;
-        }
-
-        // IPv6地址的正则表达式
-        String ipv6Pattern = "^([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$";
-        Pattern pattern = Pattern.compile(ipv6Pattern);
-        Matcher matcher = pattern.matcher(ipAddress);
-        return matcher.matches();
-    }
-
-    /**
-     * 校验字符串是否是一个合格的IP地址
-     * 会发现如下类型的IP，是有效的IP地址，但是实际情况却不会有人这么写。
-     * 应当从我们的正则中剔除
-     * PING 181.002.245.007 (181.2.245.7): 56 data bytes
-     *
-     * @param ip
-     * @return
-     */
-    public static boolean isValidIPPort(String ip) {
-
-        if (ip.isEmpty()) {
-            return false;
-        }
-        ip = ip.trim();
-        if (ip.contains(":")) {
-            String[] parts = ip.split(":");
-            if (parts.length != 2) {
-                return false;
-            }
-            ip = parts[0];
-            String portPart = parts[1];
-            if (!isValidPort(portPart)) {
-                return false;
-            }
-        }
-        return isValidIPv4(ip);
+    public static boolean isPublicIPv4NoPort(String ipAddress) {
+        return isValidIPv4NoPort(ipAddress) && !isPrivateIPv4NoPort(ipAddress);
     }
 
 
@@ -127,8 +71,7 @@ public class IPAddressUtils {
      * @param ip
      * @return
      */
-
-    public static boolean isValidIPv4(String ip) {
+    public static boolean isValidIPv4NoPort(String ip) {
 
         if (ip == null || ip.isEmpty()) {
             return false;
@@ -154,6 +97,79 @@ public class IPAddressUtils {
         return !ip.endsWith(".");
     }
 
+
+    /**
+     * 可以包含IP，也可以不包含
+     * 校验字符串是否是一个合格的IP地址
+     * 会发现如下类型的IP，是有效的IP地址，但是实际情况却不会有人这么写。
+     * 应当从我们的正则中剔除
+     * PING 181.002.245.007 (181.2.245.7): 56 data bytes
+     *
+     * @param ip
+     * @return
+     */
+    public static boolean isValidIPv4Port(String ip) {
+
+        if (ip.isEmpty()) {
+            return false;
+        }
+        ip = ip.trim();
+        if (ip.contains(":")) {
+            String[] parts = ip.split(":");
+            if (parts.length != 2) {
+                return false;
+            }
+            ip = parts[0];
+            String portPart = parts[1];
+            if (!isValidPort(portPart)) {
+                return false;
+            }
+        }
+        return isValidIPv4NoPort(ip);
+    }
+
+    
+    public static boolean isPrivateIPv4Port(String ip) {
+
+        if (ip.isEmpty()) {
+            return false;
+        }
+        ip = ip.trim();
+        if (ip.contains(":")) {
+            String[] parts = ip.split(":");
+            if (parts.length != 2) {
+                return false;
+            }
+            ip = parts[0];
+            String portPart = parts[1];
+            if (!isValidPort(portPart)) {
+                return false;
+            }
+        }
+        return isValidIPv4(ip);
+    }
+    
+    public static boolean isPublicIPv4Port(String ip) {
+
+        if (ip.isEmpty()) {
+            return false;
+        }
+        ip = ip.trim();
+        if (ip.contains(":")) {
+            String[] parts = ip.split(":");
+            if (parts.length != 2) {
+                return false;
+            }
+            ip = parts[0];
+            String portPart = parts[1];
+            if (!isValidPort(portPart)) {
+                return false;
+            }
+        }
+        return isValidIPv4(ip);
+    }
+
+
     /**
      * 是否是有效的端口
      *
@@ -176,6 +192,7 @@ public class IPAddressUtils {
     public static boolean isValidPort(int portInt) {
         return portInt >= 0 && portInt <= 65535;
     }
+
 
     public static boolean isValidSubnet(String subnet) {
         if (subnet == null) return false;
@@ -401,14 +418,40 @@ public class IPAddressUtils {
         return ipRange.contains(inputIPAddress);
     }
 
-
-    public static List<String> grepIPv4(String text) {
-        return TextUtils.grepWithRegex(text, Grep_IP_ADDRESS_STRING);
+    /**
+     * 提取IP，不带端口
+     * @param text
+     * @return
+     */
+    public static List<String> grepIPv4NoPort(String text) {
+        return TextUtils.grepWithRegex(text, GREP_IP_ADDRESS_STRING_NO_PORT);
+    }
+    
+    /**
+     * 如果有port，结果会带上port，没有则是纯IP
+     * @param text
+     * @return
+     */
+    public static List<String> grepIPv4Port(String text) {
+        return TextUtils.grepWithRegex(text, GREP_IP_ADDRESS_STRING_WITH_PORT);
     }
 
-    public static List<String> grepPrivateIPv4(String text) {
+    
+    public static List<String> grepPrivateIPv4NoPort(String text) {
         List<String> result = new ArrayList<>();
-        List<String> lines = grepIPv4(text);
+        List<String> lines = grepIPv4NoPort(text);
+
+        for (String line : lines) {
+            if (isPrivateIPv4(line)|| isPrivateIPv4) {
+                result.add(line);
+            }
+        }
+        return result;
+    }
+    
+    public static List<String> grepPrivateIPv4Port(String text) {
+        List<String> result = new ArrayList<>();
+        List<String> lines = grepIPv4Port(text);
 
         for (String line : lines) {
             if (isPrivateIPv4(line)) {
@@ -417,7 +460,6 @@ public class IPAddressUtils {
         }
         return result;
     }
-
 
     public static List<String> grepPublicIPv4(String text) {
         List<String> result = new ArrayList<>();
@@ -450,6 +492,47 @@ public class IPAddressUtils {
     public static List<String> grepSubnet(String text) {
         String pattern = "\\d{1,3}(?:\\.\\d{1,3}){3}(?:/\\d{1,2})?";
         return TextUtils.grepWithRegex(text,pattern);
+    }
+
+
+
+    public static boolean isPrivateIPv6(String ipAddress) {
+        try {
+            // 验证IPv6地址的格式
+            if (!isValidIPv6(ipAddress)) {
+                return false;
+            }
+
+            String[] ipParts = ipAddress.trim().split(":");
+            String firstBlock = ipParts[0].toLowerCase(); // 将第一个块转换为小写字母，以方便比较
+            String prefix = firstBlock.substring(0, 2);
+
+            // 检查IPv6地址的范围
+            if (firstBlock.equals("fe80") ||
+                    firstBlock.equals("fc00") ||
+                    firstBlock.equals("fd00") ||
+                    (prefix.equals("fc") && firstBlock.length() >= 4) ||
+                    (prefix.equals("fd") && firstBlock.length() >= 4)) {
+                return true;
+            }
+        } catch (Exception ex) {
+            return false;
+        }
+
+        return false;
+    }
+
+
+    public static boolean isValidIPv6(String ipAddress) {
+        if (ipAddress == null || ipAddress.isEmpty()) {
+            return false;
+        }
+
+        // IPv6地址的正则表达式
+        String ipv6Pattern = "^([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$";
+        Pattern pattern = Pattern.compile(ipv6Pattern);
+        Matcher matcher = pattern.matcher(ipAddress);
+        return matcher.matches();
     }
 
 

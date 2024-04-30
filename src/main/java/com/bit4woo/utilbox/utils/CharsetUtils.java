@@ -12,10 +12,6 @@ import org.apache.commons.io.input.BOMInputStream;
 
 public class CharsetUtils {
 
-	public CharsetUtils() {
-		// TODO Auto-generated constructor stub
-	}
-
 	public static String getSystemCharSet() {
 		return Charset.defaultCharset().toString();
 	}
@@ -46,7 +42,7 @@ public class CharsetUtils {
 
 	/**
 	 * 进行响应包的编码转换。
-	 * @param response
+	 * @param content
 	 * @return 转换后的格式的byte[]
 	 */
 	public static byte[] covertCharSet(byte[] content,String originalCharset,String newCharset){

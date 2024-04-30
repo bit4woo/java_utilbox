@@ -10,7 +10,7 @@ public class ByteArrayUtils {
      * srcPoC 是原数组的起始位置，length是要截取的长度
      *
      */
-    public byte[] subByte(byte[] b,int srcPos,int length){
+    public static byte[] subByte(byte[] b,int srcPos,int length){
         byte[] b1 = new byte[length];
         System.arraycopy(b, srcPos, b1, 0, length);
         return b1;
@@ -110,6 +110,4 @@ public class ByteArrayUtils {
 
         return failure;
     }
-
-
 }

@@ -6,10 +6,6 @@ import java.util.List;
 
 
 public class ClassUtils {
-
-	public ClassUtils() {
-		// TODO Auto-generated constructor stub
-	}
 	
 	public static List<String> getPublicStaticFinalStringFields(Class classObj) {
 		List<String> result = new ArrayList<>();

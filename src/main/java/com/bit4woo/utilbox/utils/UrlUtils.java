@@ -5,8 +5,6 @@ import java.net.URL;
 import java.util.List;
 
 public class UrlUtils {
-    private final URL url;
-
     public static final String REGEX_TO_GREP_URL = "(?:\"|')"
             + "("
             + "((?:[a-zA-Z]{1,10}://|//)[^\"'/]{1,}\\.[a-zA-Z]{2,}[^\"']{0,})"
@@ -28,8 +26,7 @@ public class UrlUtils {
         String url1 = "http://www.example.com";
         String url2 = "https://www.example.com:8080";
         String url3 = "ftp://www.example.com:21/files#1111";
-
-        System.out.println(new UrlUtils(url1).getFullURLWithDefaultPort());
+        System.out.println(url2.split("#")[0]);
 
         try {
             System.out.println(new URL(bbb).toString());
@@ -39,25 +36,36 @@ public class UrlUtils {
         }
     }
 
-    public UrlUtils(String urlStr) throws MalformedURLException {
-        this.url = new URL(urlStr);
-    }
-
-    UrlUtils(URL url) {
-        this.url = url;
-    }
-
-    public String getHost() {
-        return url.getHost();
-    }
-
-    public int getPort() {
-        int port = url.getPort();
-        if (port == -1) {
-            port = url.getDefaultPort();
+    /**
+     * 返回URL中的host，如果出错返回原始值
+     *
+     * @param urlStr
+     * @return
+     */
+    public static String getHost(String urlStr) {
+        try {
+            return new URL(urlStr).getHost();
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+            return urlStr;
         }
-        return port;
     }
+
+    public static int getPort(String urlString) {
+        try {
+            URL url = new URL(urlString);
+            int port = url.getPort();
+
+            if (port == -1) {
+                port = url.getDefaultPort();
+            }
+            return port;
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+            return -1;
+        }
+    }
+
 
     public static boolean isVaildUrl(String urlString) {
         try {
@@ -70,8 +78,7 @@ public class UrlUtils {
 
 
     /**
-     * return Type is URL,not String.
-     * use equal() function to compare URL object.
+     * URL object use equal() function to compare URL object.
      * the string contains default port or not both OK, but the path(/) is sensitive
      * URL对象可以用它自己提供的equal()函数进行对比，是否包含默认端口都是没有关系的。但最后的斜杠path却是有关系的。
      * <p>
@@ -81,10 +88,15 @@ public class UrlUtils {
      *
      * @return http://www.baidu.com/  不包含默认端口；包含默认path(/)
      */
-    public String getBaseURL() {
-        String baseUrl = url.getProtocol() + "://" + url.getHost() + ":" + getPort() + "/";
-        baseUrl = removeUrlDefaultPort(baseUrl);
-        return baseUrl;
+    public static String getBaseUrl(String urlString) {
+        String baseUrlWithPort = getBaseUrlWithDefaultPort(urlString);
+        return removeUrlDefaultPort(baseUrlWithPort);
+    }
+
+
+    public static String getBaseUrlNoDefaultPort(String urlString) {
+        String baseUrlWithPort = getBaseUrlWithDefaultPort(urlString);
+        return removeUrlDefaultPort(baseUrlWithPort);
     }
 
     /**
@@ -99,8 +111,19 @@ public class UrlUtils {
      *
      * @return
      */
-    public String getBaseURLWithDefaultPort() {
-        return url.getProtocol() + "://" + url.getHost() + ":" + getPort() + "/";
+    public static String getBaseUrlWithDefaultPort(String urlString) {
+        try {
+            URL url = new URL(urlString);
+            int port = url.getPort();
+
+            if (port == -1) {
+                port = url.getDefaultPort();
+            }
+            return url.getProtocol() + "://" + url.getHost() + ":" + port + "/";
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+            return urlString;
+        }
     }
 
 
@@ -112,8 +135,12 @@ public class UrlUtils {
      * 不包含默认端口的URL格式，符合通常浏览器中的格式
      * http://bit4woo.com/test.html#123
      */
-    public String getFullURL() {
-        return url.toString();
+    public static String getFullUrl(String urlStr) {
+        return removeUrlDefaultPort(urlStr);
+    }
+
+    public static String getFullUrlNoDefaultPort(String urlStr) {
+        return removeUrlDefaultPort(urlStr);
     }
 
     /**
@@ -124,8 +151,8 @@ public class UrlUtils {
      * 这个函数的返回结果转换成字符串是包含了默认端口的。
      * http://bit4woo.com:80/test.html#123
      */
-    public String getFullURLWithDefaultPort() {
-        return addUrlDefaultPort(url.toString());
+    public static String getFullUrlWithDefaultPort(String urlStr) {
+        return addUrlDefaultPort(urlStr);
     }
 
     /**
@@ -206,7 +233,7 @@ public class UrlUtils {
     /**
      * 提取没有以/开头的URL path，误报较多，却有时候有用
      *
-     * @param httpResponse
+     * @param text
      * @return
      */
     public static List<String> grepUrlPathNotStartWithSlash(String text) {
@@ -225,6 +252,9 @@ public class UrlUtils {
     public static boolean uselessExtension(String urlpath) {
         String extensions = "css|jpeg|gif|jpg|png|rar|zip|svg|jpeg|ico|woff|woff2|ttf|otf|vue";
         String[] extList = extensions.split("\\|");
+
+        urlpath = urlpath.split("#")[0];
+
         for (String item : extList) {
             if (urlpath.endsWith("." + item)) {
                 return true;

@@ -8,8 +8,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 import org.xbill.DNS.ARecord;
@@ -27,13 +25,12 @@ public class DomainUtils {
 
 
     //可能有xxx.services，xxx.international这样的域名,适当提高长度
-    public static final String VAILD_DOMAIN_NAME_PATTERN = "^((?!-)[A-Za-z0-9-]{1,63}(?<!-)\\.)+[A-Za-z]{2,11}(?::\\d{1,5})?$";
-    public static final String VAILD_DOMAIN_NAME_NO_PORT_PATTERN = "^((?!-)[A-Za-z0-9-]{1,63}(?<!-)\\.)+[A-Za-z]{2,11}$";
+    public static final String REGEX_TO_VAILDATE_DOMAIN_NAME_MAY_WITH_PORT = "^((?!-)[A-Za-z0-9-]{1,63}(?<!-)\\.)+[A-Za-z]{2,11}(?::\\d{1,5})?$";
+    public static final String REGEX_TO_VAILDATE_DOMAIN_NAME_NO_PORT = "^((?!-)[A-Za-z0-9-]{1,63}(?<!-)\\.)+[A-Za-z]{2,11}$";
     //final String DOMAIN_NAME_PATTERN = "([A-Za-z0-9-]{1,63}(?<!-)\\.)+[A-Za-z]{2,6}";//-this.state.scroll 这种也会被认为是合法的。
 
-    public static final String GREP_DOMAIN_NAME_PATTERN = "((?!-)[A-Za-z0-9-]{1,63}(?<!-)\\.)+[A-Za-z]{2,11}";
-
-    public static final String GREP_DOMAIN_NAME_AND_PORT_PATTERN = "((?!-)[A-Za-z0-9-*]{1,63}(?<!-)\\.)+[A-Za-z]{2,11}(?::\\d{1,5})?";
+    public static final String REGEX_TO_GREP_DOMAIN_NAME_NO_PORT = "((?!-)[A-Za-z0-9-]{1,63}(?<!-)\\.)+[A-Za-z]{2,11}";
+    public static final String REGEX_TO_GREP_DOMAIN_NAME_MAY_WITH_PORT = "((?!-)[A-Za-z0-9-*]{1,63}(?<!-)\\.)+[A-Za-z]{2,11}(?::\\d{1,5})?";
     //加上(?::\\d{1,5})?部分，支持端口模式
     //加*号是为了匹配 类似 *.baidu.com的这种域名记录。
 
@@ -46,29 +43,27 @@ public class DomainUtils {
      * administratoradministrator
      * 虽然按照RFC的规定，域名的单个字符的模块长度可以是63。但是实际使用情况中，基本不可能有这样的域名。
      */
-    public static final String VAILD_WILDCARD_DOMAIN_NAME_PATTERN = "^((?!-)[A-Za-z0-9\\*-]{1,32}(?<!-)\\.)+([A-Za-z*]{1,11})$";
+    public static final String REGEX_TO_VAILD_WILDCARD_DOMAIN_NAME = "^((?!-)[A-Za-z0-9\\*-]{1,32}(?<!-)\\.)+([A-Za-z*]{1,11})$";
     //final String DOMAIN_NAME_PATTERN = "([A-Za-z0-9-]{1,63}(?<!-)\\.)+[A-Za-z]{2,6}";//-this.state.scroll 这种也会被认为是合法的。
 
 
     //域名校验和域名提取还是要区分对待
-    public static boolean isValidDomainPort(String domain) {
-        return isValidDomainPrivate(domain, VAILD_DOMAIN_NAME_PATTERN);
+    public static boolean isValidDomainMayPort(String domain) {
+        return isValidDomainPrivate(domain, REGEX_TO_VAILDATE_DOMAIN_NAME_MAY_WITH_PORT);
     }
 
 
     public static boolean isValidDomainNoPort(String domain) {
-        return isValidDomainPrivate(domain, VAILD_DOMAIN_NAME_NO_PORT_PATTERN);
+        return isValidDomainPrivate(domain, REGEX_TO_VAILDATE_DOMAIN_NAME_NO_PORT);
     }
 
     private static boolean isValidDomainPrivate(String domain, String patternStr) {
-        if (null == domain) {
+        if (StringUtils.isEmpty(domain)) {
             return false;
         }
 
-        Pattern pattern = Pattern.compile(patternStr);
-        Matcher matcher = pattern.matcher(domain);
-        boolean formateOk = matcher.matches();
-        if (formateOk) {
+        boolean isOk = TextUtils.isRegexMatch(domain, patternStr);
+        if (isOk) {
             //a86ba224e43010880724df4a4be78c11
             //administratoradministrator
             //虽然按照RFC的规定，域名的单个字符的模块长度可以是63。但是实际使用情况中，基本不可能有这样的域名。
@@ -102,14 +97,12 @@ public class DomainUtils {
      * @return
      */
     public static boolean isValidWildCardDomain(String domain) {
-        if (null == domain) {
+        if (StringUtils.isEmpty(domain)) {
             return false;
         }
 
-        Pattern pDomainNameOnly = Pattern.compile(VAILD_WILDCARD_DOMAIN_NAME_PATTERN);
-        Matcher matcher = pDomainNameOnly.matcher(domain);
-        boolean formateOk = matcher.matches();
-        return formateOk && domain.contains("*");
+        boolean isOk = TextUtils.isRegexMatch(domain, REGEX_TO_VAILD_WILDCARD_DOMAIN_NAME);
+        return isOk && domain.contains("*");
     }
 
     /**
@@ -153,18 +146,16 @@ public class DomainUtils {
 
         domainRegex = domainRegex.replaceAll("\\*", "\\.\\*");//  * ---> .*  即*就是正则中的.*
         //System.out.println(domainRegex);
-        Pattern pDomainNameOnly = Pattern.compile(domainRegex);
-        Matcher matcher = pDomainNameOnly.matcher(StrDomain);
-        return matcher.matches();
+
+        return TextUtils.isRegexMatch(StrDomain, domainRegex);
     }
 
     public static List<String> grepDomainAndPort(String text) {
-        return TextUtils.grepWithRegex(text, GREP_DOMAIN_NAME_AND_PORT_PATTERN);
+        return TextUtils.grepWithRegex(text, REGEX_TO_GREP_DOMAIN_NAME_MAY_WITH_PORT);
     }
 
-
     public static List<String> grepDomainNoPort(String text) {
-        return TextUtils.grepWithRegex(text, GREP_DOMAIN_NAME_PATTERN);
+        return TextUtils.grepWithRegex(text, REGEX_TO_GREP_DOMAIN_NAME_NO_PORT);
     }
 
     public static List<String> grepPort(String text) {
@@ -187,7 +178,7 @@ public class DomainUtils {
         result.put("IP", IPset);
         result.put("CDN", CDNSet);
 
-        if (domain == null || IPAddressUtils.isValidIPv4(domain)) {//目标是一个IP
+        if (domain == null || IPAddressUtils.isValidIPv4NoPort(domain)) {//目标是一个IP
             IPset.add(domain);
             result.put("IP", IPset);
             return result;
@@ -196,7 +187,7 @@ public class DomainUtils {
         try {
             Resolver resolver = null;
             Lookup lookup = new Lookup(domain, org.xbill.DNS.Type.A);
-            if (IPAddressUtils.isValidIPv4(server)) {
+            if (IPAddressUtils.isValidIPv4MayPort(server)) {
                 resolver = new SimpleResolver(server);
                 lookup.setResolver(resolver);
             }
@@ -245,12 +236,12 @@ public class DomainUtils {
      */
     public static List<String> GetAuthServer(String domain, String server) {
         List<String> result = new ArrayList<>();
-        if (StringUtils.isEmpty(domain) || IPAddressUtils.isValidIPv4(domain)) {//目标是一个IP
+        if (StringUtils.isEmpty(domain) || IPAddressUtils.isValidIPv4MayPort(domain)) {//目标是一个IP
             return result;
         }
         try {
             Lookup lookup = new Lookup(domain, org.xbill.DNS.Type.NS);
-            if (IPAddressUtils.isValidIPv4(server) || DomainUtils.isValidDomainPort(server)) {
+            if (IPAddressUtils.isValidIPv4MayPort(server) || DomainUtils.isValidDomainMayPort(server)) {
                 Resolver resolver = new SimpleResolver(server);
                 lookup.setResolver(resolver);
             }
@@ -465,7 +456,7 @@ public class DomainUtils {
 
         host = host.trim();
         int port = -1;
-        if (IPAddressUtils.isValidIPv4Port(host) || DomainUtils.isValidDomainPort(host)) {
+        if (IPAddressUtils.isValidIPv4MayPort(host) || DomainUtils.isValidDomainMayPort(host)) {
             try {
                 if (host.contains(":")) {
                     host = host.split(":")[0];
@@ -512,7 +503,7 @@ public class DomainUtils {
 
     public static void main(String[] args) {
         //System.out.println(isWhiteListTDL("test.example.co.th","example.com"));
-        System.out.println(isValidDomainPort("test-api.xxx.services:22"));
+        System.out.println(isValidDomainMayPort("test-api.xxx.services:22"));
         //testWild();
 
         //System.out.println(isValidWildCardDomain("aaaaaaaaa-aaaaaaaaaaaaaaa-aaaaaaaaaaaaaa.www1.baidu.com"));

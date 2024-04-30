@@ -7,20 +7,20 @@ import java.util.List;
 public class UrlUtils {
     private final URL url;
 
-    public static final String URL_Regex = "(?:\"|')"
-			+ "("
-			+ "((?:[a-zA-Z]{1,10}://|//)[^\"'/]{1,}\\.[a-zA-Z]{2,}[^\"']{0,})"
-			+ "|"
-			+ "((?:/|\\.\\./|\\./)[^\"'><,;| *()(%%$^/\\\\\\[\\]][^\"'><,;|()]{1,})"
-			+ "|"
-			+ "([a-zA-Z0-9_\\-/]{1,}/[a-zA-Z0-9_\\-/]{1,}\\.(?:[a-zA-Z]{1,4}|action)(?:[\\?|/][^\"|']{0,}|))"
-			+ "|"
-			+ "([a-zA-Z0-9_\\-]{1,}\\.(?:php|asp|aspx|jsp|json|action|html|js|txt|xml)(?:\\?[^\"|']{0,}|))"
-			+ ")"
-			+ "(?:\"|')";
-    public static final String URL_PATH_NOT_START_WITH_SLASH = "[a-zA-Z0-9_\\-/]{1,}/[a-zA-Z0-9_\\-.]{1,}";//处理不是/开头的urlpath
-    
-    
+    public static final String REGEX_TO_GREP_URL = "(?:\"|')"
+            + "("
+            + "((?:[a-zA-Z]{1,10}://|//)[^\"'/]{1,}\\.[a-zA-Z]{2,}[^\"']{0,})"
+            + "|"
+            + "((?:/|\\.\\./|\\./)[^\"'><,;| *()(%%$^/\\\\\\[\\]][^\"'><,;|()]{1,})"
+            + "|"
+            + "([a-zA-Z0-9_\\-/]{1,}/[a-zA-Z0-9_\\-/]{1,}\\.(?:[a-zA-Z]{1,4}|action)(?:[\\?|/][^\"|']{0,}|))"
+            + "|"
+            + "([a-zA-Z0-9_\\-]{1,}\\.(?:php|asp|aspx|jsp|json|action|html|js|txt|xml)(?:\\?[^\"|']{0,}|))"
+            + ")"
+            + "(?:\"|')";
+    public static final String REGEX_TO_GREP_URL_PATH_NOT_START_WITH_SLASH = "[a-zA-Z0-9_\\-/]{1,}/[a-zA-Z0-9_\\-.]{1,}";//处理不是/开头的urlpath
+
+
     public static void main(String[] args) throws MalformedURLException {
         String aaa = "https://api.example.vn:443/Execute#1653013013763";
         String bbb = "https://api.example.vn/Execute#1653013013763";
@@ -199,18 +199,19 @@ public class UrlUtils {
     }
 
     public static List<String> grepUrls(String text) {
-        return TextUtils.grepWithRegex(text, URL_Regex);
+        return TextUtils.grepWithRegex(text, REGEX_TO_GREP_URL);
     }
-    
-    
-	/**
-	 * 提取没有以/开头的URL path，误报较多，却有时候有用
-	 * @param httpResponse
-	 * @return
-	 */
-	public static List<String> grepUrlPathNotStartWithSlash(String text) {
-		return TextUtils.grepWithRegex(text, URL_PATH_NOT_START_WITH_SLASH);
-	}
+
+
+    /**
+     * 提取没有以/开头的URL path，误报较多，却有时候有用
+     *
+     * @param httpResponse
+     * @return
+     */
+    public static List<String> grepUrlPathNotStartWithSlash(String text) {
+        return TextUtils.grepWithRegex(text, REGEX_TO_GREP_URL_PATH_NOT_START_WITH_SLASH);
+    }
 
     /**
      * 对于信息收集来说，没有用的文件

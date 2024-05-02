@@ -711,7 +711,11 @@ public class HelperPlus {
             return requestInfo.getContentType() == IRequestInfo.CONTENT_TYPE_JSON;
         } else {
             IResponseInfo responseInfo = helpers.analyzeResponse(content);
-            return responseInfo.getInferredMimeType().equals("JSON");
+            
+			String dataType = responseInfo.getStatedMimeType().toLowerCase();
+			String inferDataType = responseInfo.getInferredMimeType().toLowerCase();
+			
+			return dataType.contains("json") || inferDataType.contains("json");
         }
     }
 

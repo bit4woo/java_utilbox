@@ -462,7 +462,7 @@ public class DomainUtils {
                     host = host.split(":")[0];
                     port = Integer.parseInt(host.split(":")[1]);
                 }
-            } catch (NumberFormatException e) {
+            } catch (Exception e) {
                 return result;
             }
         }

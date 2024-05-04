@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 import org.apache.commons.lang3.StringEscapeUtils;
 
@@ -203,6 +204,13 @@ public class TextUtils {
         return grepWithRegex(text, regex, false, false);
     }
 
+    /**
+     * 重后向前查找，替换匹配的第一个
+     * @param string
+     * @param toReplace
+     * @param replacement
+     * @return
+     */
     public static String replaceLast(String string, String toReplace, String replacement) {
         int pos = string.lastIndexOf(toReplace);
         if (pos > -1) {
@@ -211,6 +219,38 @@ public class TextUtils {
                     + string.substring(pos + toReplace.length());
         } else {
             return string;
+        }
+    }
+    
+    /**
+     * 
+     * 各种替换场景：使用正则、不使用正则、替换第一个、替换全部
+     * @param text
+     * @param from
+     * @param to
+     * @param replaceAll
+     * @param useRegex
+     * @return
+     */
+    public static String replace(String text, String from, String to, boolean replaceAll, boolean useRegex) {
+        if (text == null || from == null || to == null || from.isEmpty()) {
+        	return text;
+        }
+        
+        if (!useRegex) {
+            from = Pattern.quote(from);
+        }
+
+        try {
+            Pattern pattern = Pattern.compile(from);
+            if (replaceAll) {
+                return pattern.matcher(text).replaceAll(to);
+            } else {
+                return pattern.matcher(text).replaceFirst(to);
+            }
+            //text = text.replace(from, to); String.replace(),不用正则的全部替换
+        } catch (PatternSyntaxException e) {
+            throw new IllegalArgumentException("Invalid regular expression: " + from);
         }
     }
 
@@ -304,6 +344,13 @@ public class TextUtils {
         return true;
     }
 
+    /**
+     * 通过Pattern.quote处理后，就完全是普通字符串操作了，不是正则表达式了
+     * @param input
+     * @param Prefix
+     * @param Suffix
+     * @return
+     */
     public static List<String> removePrefixAndSuffix(List<String> input, String Prefix, String Suffix) {
         ArrayList<String> result = new ArrayList<String>();
         if (Prefix == null && Suffix == null) {
@@ -350,6 +397,13 @@ public class TextUtils {
             index = word.indexOf(guess, index + 1);
         }
         return result;
+    }
+    
+    
+    public static void main(String[] args) {
+    	
+    	String item = "aaa.bbb@ccc.com".replaceFirst(".*@", "");
+    	System.out.println(item);
     }
 
 }

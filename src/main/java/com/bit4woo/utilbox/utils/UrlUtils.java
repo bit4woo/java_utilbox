@@ -228,8 +228,15 @@ public class UrlUtils {
     public static List<String> grepUrls(String text) {
         return TextUtils.grepWithRegex(text, REGEX_TO_GREP_URL);
     }
-
-
+    
+    /**
+     * 提取在引号中的URL，如果没有引号包含，则匹配不到
+     * @param text
+     * @return
+     */
+    public static List<String> grepUrlsInQuotes(String text) {
+        return TextUtils.grepWithRegex(text, REGEX_TO_GREP_URL_IN_QUOTES);
+    }
     /**
      * 提取没有以/开头的URL path，误报较多，却有时候有用
      *

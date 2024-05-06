@@ -5,7 +5,22 @@ import java.net.URL;
 import java.util.List;
 
 public class UrlUtils {
-    public static final String REGEX_TO_GREP_URL = ""
+	
+	//在引号中的URL，如果没有引号，就匹配不到
+	public static final String REGEX_TO_GREP_URL_IN_QUOTES = "(?:\"|')"
+            + "("
+            + "((?:[a-zA-Z]{1,10}://|//)[^\"'/]{1,}\\.[a-zA-Z]{2,}[^\"']{0,})"
+            + "|"
+            + "((?:/|\\.\\./|\\./)[^\"'><,;| *()(%%$^/\\\\\\[\\]][^\"'><,;|()]{1,})"
+            + "|"
+            + "([a-zA-Z0-9_\\-/]{1,}/[a-zA-Z0-9_\\-/]{1,}\\.(?:[a-zA-Z]{1,4}|action)(?:[\\?|/][^\"|']{0,}|))"
+            + "|"
+            + "([a-zA-Z0-9_\\-]{1,}\\.(?:php|asp|aspx|jsp|json|action|html|js|txt|xml)(?:\\?[^\"|']{0,}|))"
+            + ")"
+            + "(?:\"|')";
+    
+	//考虑优化这个表达式，发现部分URL包含了多余的部分
+    public static final String REGEX_TO_GREP_URL= ""
             + "((?:[a-zA-Z]{1,10}://|//)[^\"'/]{1,}\\.[a-zA-Z]{2,}[^\"']{0,})"
             + "|"
             + "((?:/|\\.\\./|\\./)[^\"'><,;| *()(%%$^/\\\\\\[\\]][^\"'><,;|()]{1,})"
@@ -13,13 +28,6 @@ public class UrlUtils {
             + "([a-zA-Z0-9_\\-/]{1,}/[a-zA-Z0-9_\\-/]{1,}\\.(?:[a-zA-Z]{1,4}|action)(?:[\\?|/][^\"|']{0,}|))"
             + "|"
             + "([a-zA-Z0-9_\\-]{1,}\\.(?:php|asp|aspx|jsp|json|action|html|js|txt|xml)(?:\\?[^\"|']{0,}|))";
-    
-    //在引号中的URL，如果没有引号，就匹配不到
-    public static final String REGEX_TO_GREP_URL_IN_QUOTES = "(?:\"|')"
-            + "("
-            + REGEX_TO_GREP_URL
-            + ")"
-            + "(?:\"|')";
     
     public static final String REGEX_TO_GREP_URL_PATH_NOT_START_WITH_SLASH = "[a-zA-Z0-9_\\-/]{1,}/[a-zA-Z0-9_\\-.]{1,}";//处理不是/开头的urlpath
 

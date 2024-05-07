@@ -5,10 +5,10 @@ import java.net.URL;
 import java.util.List;
 
 public class UrlUtils {
-	
-	//在引号中的URL，如果没有引号，就匹配不到。常用语JS中提取URL路径
-	//https://github.com/GerbenJavado/LinkFinder/blob/master/linkfinder.py
-	private static final String REGEX_TO_GREP_URL_IN_QUOTES = "(?:\"|')"
+
+    //在引号中的URL，如果没有引号，就匹配不到。常用语JS中提取URL路径
+    //https://github.com/GerbenJavado/LinkFinder/blob/master/linkfinder.py
+    private static final String REGEX_TO_GREP_URL_IN_QUOTES = "(?:\"|')"
             + "("
             + "((?:[a-zA-Z]{1,10}://|//)[^\"'/]{1,}\\.[a-zA-Z]{2,}[^\"']{0,})"
             + "|"
@@ -19,42 +19,49 @@ public class UrlUtils {
             + "([a-zA-Z0-9_\\-]{1,}\\.(?:php|asp|aspx|jsp|json|action|html|js|txt|xml)(?:\\?[^\"|']{0,}|))"
             + ")"
             + "(?:\"|')";
-    
-	//这个表达式的结果会包含类似o.bind、r.length、index.html的结果
-    public static final String REGEX_TO_GREP_URL= RegexUtils.WEB_URL;
-    
-    public static final String REGEX_TO_GREP_URL_WITH_PROTOCOL= RegexUtils.WEB_URL_WITH_PROTOCOL;
-    
-    public static final String REGEX_TO_GREP_URL_PATH_NOT_START_WITH_SLASH = "[a-zA-Z0-9_\\-/]{1,}/[a-zA-Z0-9_\\-.]{1,}";//处理不是/开头的urlpath
 
+    //这个表达式的结果会包含类似o.bind、r.length、index.html的结果
+    public static final String REGEX_TO_GREP_URL = RegexUtils.WEB_URL;
+
+    public static final String REGEX_TO_GREP_URL_WITH_PROTOCOL = RegexUtils.WEB_URL_WITH_PROTOCOL;
+
+    //处理不是/开头的urlpath
+    public static final String REGEX_TO_GREP_URL_PATH_NOT_START_WITH_SLASH = "[a-zA-Z0-9_\\-/]{1,}/[a-zA-Z0-9_\\-.]{1,}";
+
+    //处理不是/开头的urlpath,内容是在引号中的
+    public static final String REGEX_TO_GREP_URL_PATH_NOT_START_WITH_SLASH_IN_QUOTES = "(?:\"|')"
+            + "("
+            + REGEX_TO_GREP_URL_PATH_NOT_START_WITH_SLASH
+            + ")"
+            + "(?:\"|')";
 
     public static void main(String[] args) throws MalformedURLException {
         String aaa = "https://api.example.vn:443/Execute#1653013013763 /*";
         String bbb = "https://api.example.vn/Execute#1653013013763";
         String ccc = "      routes: [\r\n"
-        		+ "        {\r\n"
-        		+ "          path: '/home',\r\n"
-        		+ "          name: 'home',\r\n"
-        		+ "          component: function () {\r\n"
-        		+ "            return o.e('chunk-xxx').then(o.bind(null, 'xxx'))\r\n"
-        		+ "          },\r\n"
-        		+ "          meta: {\r\n"
-        		+ "          }\r\n"
-        		+ "        },\r\n"
-        		+ "        {\r\n"
-        		+ "          path: '/',\r\n"
-        		+ "          redirect: '/home'\r\n"
-        		+ "        },\r\n"
-        		+ "        {\r\n"
-        		+ "          path: '/index.html',\r\n"
-        		+ "          redirect: '/home'\r\n"
-        		+ "        },\r\n"
-        		+ "        {\r\n"
-        		+ "          path: '/web/index.html',\r\n"
-        		+ "          redirect: '/home'\r\n"
-        		+ "        }"
-        		+ "'/home111'"
-        		+ "'http://www.home111.com/aaa/bbb'";
+                + "        {\r\n"
+                + "          path: '/home',\r\n"
+                + "          name: 'home',\r\n"
+                + "          component: function () {\r\n"
+                + "            return o.e('chunk-xxx').then(o.bind(null, 'xxx'))\r\n"
+                + "          },\r\n"
+                + "          meta: {\r\n"
+                + "          }\r\n"
+                + "        },\r\n"
+                + "        {\r\n"
+                + "          path: '/',\r\n"
+                + "          redirect: '/home'\r\n"
+                + "        },\r\n"
+                + "        {\r\n"
+                + "          path: '/index.html',\r\n"
+                + "          redirect: '/home'\r\n"
+                + "        },\r\n"
+                + "        {\r\n"
+                + "          path: '/web/index.html',\r\n"
+                + "          redirect: '/home'\r\n"
+                + "        }"
+                + "'/home111'"
+                + "'http://www.home111.com/aaa/bbb'";
 
         String url1 = "http://www.example.com";
         String url2 = "https://www.example.com:8080";
@@ -67,7 +74,7 @@ public class UrlUtils {
         System.out.println(grepUrlsWithProtocol(ccc));
         //System.out.println(grepURL1(ccc));
     }
-    
+
 
     /**
      * 返回URL中的host，如果出错返回原始值
@@ -257,10 +264,11 @@ public class UrlUtils {
             return urlString;
         }
     }
-    
+
     /**
      * 注意：
      * 这个表达式的结果会包含类似o.bind、r.length、index.html的结果，误报较多，慎用！！！
+     *
      * @param text
      * @return
      */
@@ -268,34 +276,48 @@ public class UrlUtils {
     public static List<String> grepUrls(String text) {
         return TextUtils.grepWithRegex(text, REGEX_TO_GREP_URL);
     }
-    
-    
+
+
     /**
      * 以协议开头，能避免大量误报，但同时就无法提取单独URL的path部分
+     *
      * @param text
      * @return
      */
     public static List<String> grepUrlsWithProtocol(String text) {
         return TextUtils.grepWithRegex(text, REGEX_TO_GREP_URL_WITH_PROTOCOL);
     }
-    
+
     /**
      * 提取引号包含的URL路径
+     *
      * @param httpResponse
      * @return
      */
-	public static List<String> grepUrlsInQuotes(String text) {
-		return TextUtils.grepWithRegex(text, REGEX_TO_GREP_URL_IN_QUOTES,false,false,1);
-	}
+    public static List<String> grepUrlsInQuotes(String text) {
+        return TextUtils.grepWithRegex(text, REGEX_TO_GREP_URL_IN_QUOTES, false, false, 1);
+    }
 
     /**
-     * 提取没有以/开头的URL path，误报较多，却有时候有用
+     * 提取没有以/开头的URL path，误报较多，却有时候有用。慎用！！！
      *
      * @param text
      * @return
      */
+    @Deprecated
     public static List<String> grepUrlPathNotStartWithSlash(String text) {
         return TextUtils.grepWithRegex(text, REGEX_TO_GREP_URL_PATH_NOT_START_WITH_SLASH);
+    }
+
+
+    /**
+     * 提取没有以/开头的URL path，内容限定在引号之中
+     *
+     * @param text
+     * @return
+     */
+    public static List<String> grepUrlPathNotStartWithSlashInQuotes(String text) {
+        return TextUtils.grepWithRegex(text, REGEX_TO_GREP_URL_PATH_NOT_START_WITH_SLASH_IN_QUOTES, false, false, 1);
     }
 
     /**

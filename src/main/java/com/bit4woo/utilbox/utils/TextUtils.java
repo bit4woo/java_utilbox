@@ -2,12 +2,14 @@ package com.bit4woo.utilbox.utils;
 
 import java.net.URLDecoder;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringEscapeUtils;
 
 public class TextUtils {
@@ -149,16 +151,34 @@ public class TextUtils {
      * @param input
      * @return
      */
-    public static List<String> textToLines(String input) {
+    public static List<String> textToLines(String input,boolean removeEmpty,boolean doTrim) {
+    	List<String> result = new ArrayList<String>();
+    	if (input ==null) return result;
+    	
         String[] lines = input.split("(\r\n|\r|\n)", -1);
-        List<String> result = new ArrayList<String>();
         for (String line : lines) {
-            line = line.trim();
-            if (!line.equalsIgnoreCase("")) {
-                result.add(line.trim());
+        	if (doTrim) {
+        		line = line.trim();
+        	}
+            
+            if (removeEmpty && StringUtils.isEmpty(line)) {
+                continue;
+            }else {
+            	result.add(line.trim());
             }
         }
         return result;
+    }
+    
+    
+    /**
+     * 默认删除空字符串、并且trim
+     *
+     * @param input
+     * @return
+     */
+    public static List<String> textToLines(String input) {
+    	return textToLines(input,true,true);
     }
 
     /**
@@ -427,6 +447,9 @@ public class TextUtils {
 
         String item = "aaa.bbb@ccc.com".replaceFirst(".*@", "");
         System.out.println(item);
+        String[] lines = "".split("(\r\n|\r|\n)", -1);
+        System.out.println(lines.length);
+        System.out.println(Arrays.asList(lines).size());
     }
 
 }

@@ -7,6 +7,7 @@ import java.util.List;
 public class UrlUtils {
 	
 	//在引号中的URL，如果没有引号，就匹配不到
+	//https://github.com/GerbenJavado/LinkFinder/blob/master/linkfinder.py
 	public static final String REGEX_TO_GREP_URL_IN_QUOTES = "(?:\"|')"
             + "("
             + "((?:[a-zA-Z]{1,10}://|//)[^\"'/]{1,}\\.[a-zA-Z]{2,}[^\"']{0,})"
@@ -18,6 +19,8 @@ public class UrlUtils {
             + "([a-zA-Z0-9_\\-]{1,}\\.(?:php|asp|aspx|jsp|json|action|html|js|txt|xml)(?:\\?[^\"|']{0,}|))"
             + ")"
             + "(?:\"|')";
+	
+	
     
 	//考虑优化这个表达式，发现部分URL包含了多余的部分
     public static final String REGEX_TO_GREP_URL= ""
@@ -33,7 +36,7 @@ public class UrlUtils {
 
 
     public static void main(String[] args) throws MalformedURLException {
-        String aaa = "https://api.example.vn:443/Execute#1653013013763";
+        String aaa = "https://api.example.vn:443/Execute#1653013013763 /*";
         String bbb = "https://api.example.vn/Execute#1653013013763";
 
         String url1 = "http://www.example.com";
@@ -41,7 +44,7 @@ public class UrlUtils {
         String url3 = "ftp://www.example.com:21/files#1111";
         System.out.println(url2.split("#")[0]);
 
-        System.out.println(grepUrls(url3));
+        System.out.println(grepUrls(aaa));
     }
 
     /**

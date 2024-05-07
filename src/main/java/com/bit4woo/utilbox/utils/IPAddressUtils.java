@@ -30,8 +30,9 @@ public class IPAddressUtils {
                     + "|[1-9][0-9]|[0-9]))";
 
     public static final String REGEX_TO_GREP_IP_ADDRESS_STRING_MAY_WITH_PORT =
-            REGEX_TO_GREP_IP_ADDRESS_STRING_NO_PORT + "(?::\\\\d{1,5})?";
-
+            REGEX_TO_GREP_IP_ADDRESS_STRING_NO_PORT + "(?::\\d{1,5})?";
+    
+    
     public static final String REGEX_TO_GREP_SUBNET = "\\d{1,3}(?:\\.\\d{1,3}){3}(?:/\\d{1,2})?";
 
     /**
@@ -556,6 +557,9 @@ public class IPAddressUtils {
     }
 
     public static void main(String[] args) throws AddressStringException {
-        test3();
+//        test3();
+        List<String> iplist = IPAddressUtils.grepIPv4MayPort("https://104.17.174.7:2096");
+        System.out.println(iplist);
+        
     }
 }

@@ -263,7 +263,7 @@ public class RegexUtils {
 	 * Regular expression to match strings that start with a supported protocol. Rules for domain
 	 * names and TLDs are more relaxed. TLDs are optional.
 	 */
-	private static final String WEB_URL_WITH_PROTOCOL = "("
+	public static final String WEB_URL_WITH_PROTOCOL = "("
 			+ WORD_BOUNDARY
 			+ "(?:"
 			+ "(?:" + PROTOCOL + "(?:" + USER_INFO + ")?" + ")"

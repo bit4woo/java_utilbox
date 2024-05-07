@@ -20,8 +20,10 @@ public class UrlUtils {
             + ")"
             + "(?:\"|')";
     
-	//考虑优化这个表达式，发现部分URL包含了多余的部分
+	//这个表达式的结果会包含类似o.bind、r.length、index.html的结果
     public static final String REGEX_TO_GREP_URL= RegexUtils.WEB_URL;
+    
+    public static final String REGEX_TO_GREP_URL_WITH_PROTOCOL= RegexUtils.WEB_URL_WITH_PROTOCOL;
     
     public static final String REGEX_TO_GREP_URL_PATH_NOT_START_WITH_SLASH = "[a-zA-Z0-9_\\-/]{1,}/[a-zA-Z0-9_\\-.]{1,}";//处理不是/开头的urlpath
 
@@ -52,7 +54,7 @@ public class UrlUtils {
         		+ "          redirect: '/home'\r\n"
         		+ "        }"
         		+ "'/home111'"
-        		+ "'home111/aaa/bbb'";
+        		+ "'http://www.home111.com/aaa/bbb'";
 
         String url1 = "http://www.example.com";
         String url2 = "https://www.example.com:8080";
@@ -61,6 +63,8 @@ public class UrlUtils {
 
         //System.out.println(grepUrls(ccc));
         System.out.println(grepUrlsInQuotes(ccc));
+        System.out.println(grepUrls(ccc));
+        System.out.println(grepUrlsWithProtocol(ccc));
         //System.out.println(grepURL1(ccc));
     }
     
@@ -253,9 +257,26 @@ public class UrlUtils {
             return urlString;
         }
     }
-
+    
+    /**
+     * 注意：
+     * 这个表达式的结果会包含类似o.bind、r.length、index.html的结果，误报较多，慎用！！！
+     * @param text
+     * @return
+     */
+    @Deprecated
     public static List<String> grepUrls(String text) {
         return TextUtils.grepWithRegex(text, REGEX_TO_GREP_URL);
+    }
+    
+    
+    /**
+     * 以协议开头，能避免大量误报，但同时就无法提取单独URL的path部分
+     * @param text
+     * @return
+     */
+    public static List<String> grepUrlsWithProtocol(String text) {
+        return TextUtils.grepWithRegex(text, REGEX_TO_GREP_URL_WITH_PROTOCOL);
     }
     
     /**

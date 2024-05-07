@@ -8,12 +8,12 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.commons.text.StringEscapeUtils;
 
 public class TextUtils {
 
     /**
-     * 先解Unicode，再解url，应该才是正确操作吧
+     * 先解Unicode，再解url，应该才是正确操作吧.TODO
      *
      * @param line
      * @return
@@ -63,7 +63,7 @@ public class TextUtils {
             while (true) {
                 try {
                     int oldlen = line.length();
-                    line = URLDecoder.decode(line);
+                    line = URLDecoder.decode(line,"UTF-8");
                     int currentlen = line.length();
                     if (oldlen > currentlen) {
                         continue;

@@ -66,7 +66,7 @@ public class CharsetUtils {
 	public static String detectCharset(byte[] bytes){
 		try {
 			ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
-			BOMInputStream bomInputStream = new BOMInputStream(bis);
+			BOMInputStream bomInputStream = BOMInputStream.builder().setInputStream(bis).get();
 			String encoding = bomInputStream.getBOMCharsetName();
 			bomInputStream.close();
 			return getCharsetName(encoding);
@@ -75,14 +75,17 @@ public class CharsetUtils {
 			return null;
 		}
 	}
+	
 
-	public static void main(String[] args) {
-		Map<String, Charset> charsets = Charset.availableCharsets();
-
-		// 打印所有字符编码集的规范名称
-		System.out.println("Available Charsets:");
-		for (String name : charsets.keySet()) {
-			System.out.println(name);
-		}
+	public static void main(String[] args) throws Exception {
+//		Map<String, Charset> charsets = Charset.availableCharsets();
+//
+//		// 打印所有字符编码集的规范名称
+//		System.out.println("Available Charsets:");
+//		for (String name : charsets.keySet()) {
+//			System.out.println(name);
+//		}
+		
+		System.out.println(detectCharset("中国中文11111".getBytes("UTF-8")));
 	}
 }

@@ -22,13 +22,14 @@ import inet.ipaddr.IPAddressString;
  *
  */
 public class IPAddressUtils {
-
+	
+	//和RegexUtils.IP_ADDRESS_STRING一模一样
     public static final String REGEX_TO_GREP_IP_ADDRESS_STRING_NO_PORT =
             "((25[0-5]|2[0-4][0-9]|[0-1][0-9]{2}|[1-9][0-9]|[1-9])\\.(25[0-5]|2[0-4]"
                     + "[0-9]|[0-1][0-9]{2}|[1-9][0-9]|[1-9]|0)\\.(25[0-5]|2[0-4][0-9]|[0-1]"
                     + "[0-9]{2}|[1-9][0-9]|[1-9]|0)\\.(25[0-5]|2[0-4][0-9]|[0-1][0-9]{2}"
                     + "|[1-9][0-9]|[0-9]))";
-
+    
     public static final String REGEX_TO_GREP_IP_ADDRESS_STRING_MAY_WITH_PORT =
             REGEX_TO_GREP_IP_ADDRESS_STRING_NO_PORT + "(?::\\d{1,5})?";
     
@@ -542,7 +543,7 @@ public class IPAddressUtils {
 
 
     public static void test3() {
-        Set<String> a = new HashSet();
+        Set<String> a = new HashSet<String>();
         a.add("218.213.102.6/31");
         System.out.println(toIPSet(a));
         Set<String> subnets = new HashSet<String>();

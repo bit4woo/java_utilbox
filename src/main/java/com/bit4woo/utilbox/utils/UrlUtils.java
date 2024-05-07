@@ -8,7 +8,8 @@ public class UrlUtils {
 	
 	//在引号中的URL，如果没有引号，就匹配不到
 	//https://github.com/GerbenJavado/LinkFinder/blob/master/linkfinder.py
-	public static final String REGEX_TO_GREP_URL_IN_QUOTES = "(?:\"|')"
+	@Deprecated
+	private static final String REGEX_TO_GREP_URL_IN_QUOTES = "(?:\"|')"
             + "("
             + "((?:[a-zA-Z]{1,10}://|//)[^\"'/]{1,}\\.[a-zA-Z]{2,}[^\"']{0,})"
             + "|"
@@ -19,18 +20,9 @@ public class UrlUtils {
             + "([a-zA-Z0-9_\\-]{1,}\\.(?:php|asp|aspx|jsp|json|action|html|js|txt|xml)(?:\\?[^\"|']{0,}|))"
             + ")"
             + "(?:\"|')";
-	
-	
     
 	//考虑优化这个表达式，发现部分URL包含了多余的部分
-    public static final String REGEX_TO_GREP_URL= ""
-            + "((?:[a-zA-Z]{1,10}://|//)[^\"'/]{1,}\\.[a-zA-Z]{2,}[^\"']{0,})"
-            + "|"
-            + "((?:/|\\.\\./|\\./)[^\"'><,;| *()(%%$^/\\\\\\[\\]][^\"'><,;|()]{1,})"
-            + "|"
-            + "([a-zA-Z0-9_\\-/]{1,}/[a-zA-Z0-9_\\-/]{1,}\\.(?:[a-zA-Z]{1,4}|action)(?:[\\?|/][^\"|']{0,}|))"
-            + "|"
-            + "([a-zA-Z0-9_\\-]{1,}\\.(?:php|asp|aspx|jsp|json|action|html|js|txt|xml)(?:\\?[^\"|']{0,}|))";
+    public static final String REGEX_TO_GREP_URL= RegexUtils.WEB_URL;
     
     public static final String REGEX_TO_GREP_URL_PATH_NOT_START_WITH_SLASH = "[a-zA-Z0-9_\\-/]{1,}/[a-zA-Z0-9_\\-.]{1,}";//处理不是/开头的urlpath
 
@@ -38,13 +30,16 @@ public class UrlUtils {
     public static void main(String[] args) throws MalformedURLException {
         String aaa = "https://api.example.vn:443/Execute#1653013013763 /*";
         String bbb = "https://api.example.vn/Execute#1653013013763";
+        String ccc = "\"https://22.22.22.226:10000\"\r\n"
+        		+ "http://119.2.213.107:18080\r\n"
+        		+ "<<<<<<<<<<web service<<<<<<<<<<";
 
         String url1 = "http://www.example.com";
         String url2 = "https://www.example.com:8080";
         String url3 = "ftp://www.example.com:21/files#1111";
         System.out.println(url2.split("#")[0]);
 
-        System.out.println(grepUrls(aaa));
+        System.out.println(grepUrls(ccc));
     }
 
     /**
@@ -240,14 +235,7 @@ public class UrlUtils {
         return TextUtils.grepWithRegex(text, REGEX_TO_GREP_URL);
     }
     
-    /**
-     * 提取在引号中的URL，如果没有引号包含，则匹配不到
-     * @param text
-     * @return
-     */
-    public static List<String> grepUrlsInQuotes(String text) {
-        return TextUtils.grepWithRegex(text, REGEX_TO_GREP_URL_IN_QUOTES);
-    }
+
     /**
      * 提取没有以/开头的URL path，误报较多，却有时候有用
      *

@@ -389,6 +389,21 @@ public class TextUtils {
             return result;
         }
     }
+    
+    
+    public static List<String> deduplicate(List<String> input) {
+    	List<String> result = new ArrayList<String>();
+
+    	for (String item : input) {
+    		if (result.contains(item)) {
+    			continue;
+    		} else {
+    			result.add(item);
+    		}
+    	}//不在使用set方法去重，以便保持去重后的顺序！
+    	return result;
+    }
+
 
     public static String reverse(String str) {
         if (str == null) {

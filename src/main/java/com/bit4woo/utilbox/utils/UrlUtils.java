@@ -6,9 +6,8 @@ import java.util.List;
 
 public class UrlUtils {
 	
-	//在引号中的URL，如果没有引号，就匹配不到
+	//在引号中的URL，如果没有引号，就匹配不到。常用语JS中提取URL路径
 	//https://github.com/GerbenJavado/LinkFinder/blob/master/linkfinder.py
-	@Deprecated
 	private static final String REGEX_TO_GREP_URL_IN_QUOTES = "(?:\"|')"
             + "("
             + "((?:[a-zA-Z]{1,10}://|//)[^\"'/]{1,}\\.[a-zA-Z]{2,}[^\"']{0,})"
@@ -30,17 +29,41 @@ public class UrlUtils {
     public static void main(String[] args) throws MalformedURLException {
         String aaa = "https://api.example.vn:443/Execute#1653013013763 /*";
         String bbb = "https://api.example.vn/Execute#1653013013763";
-        String ccc = "\"https://22.22.22.226:10000\"\r\n"
-        		+ "http://119.2.213.107:18080\r\n"
-        		+ "<<<<<<<<<<web service<<<<<<<<<<";
+        String ccc = "      routes: [\r\n"
+        		+ "        {\r\n"
+        		+ "          path: '/home',\r\n"
+        		+ "          name: 'home',\r\n"
+        		+ "          component: function () {\r\n"
+        		+ "            return o.e('chunk-xxx').then(o.bind(null, 'xxx'))\r\n"
+        		+ "          },\r\n"
+        		+ "          meta: {\r\n"
+        		+ "          }\r\n"
+        		+ "        },\r\n"
+        		+ "        {\r\n"
+        		+ "          path: '/',\r\n"
+        		+ "          redirect: '/home'\r\n"
+        		+ "        },\r\n"
+        		+ "        {\r\n"
+        		+ "          path: '/index.html',\r\n"
+        		+ "          redirect: '/home'\r\n"
+        		+ "        },\r\n"
+        		+ "        {\r\n"
+        		+ "          path: '/web/index.html',\r\n"
+        		+ "          redirect: '/home'\r\n"
+        		+ "        }"
+        		+ "'/home111'"
+        		+ "'home111/aaa/bbb'";
 
         String url1 = "http://www.example.com";
         String url2 = "https://www.example.com:8080";
         String url3 = "ftp://www.example.com:21/files#1111";
-        System.out.println(url2.split("#")[0]);
+        //System.out.println(url2.split("#")[0]);
 
-        System.out.println(grepUrls(ccc));
+        //System.out.println(grepUrls(ccc));
+        System.out.println(grepUrlsInQuotes(ccc));
+        //System.out.println(grepURL1(ccc));
     }
+    
 
     /**
      * 返回URL中的host，如果出错返回原始值
@@ -235,6 +258,14 @@ public class UrlUtils {
         return TextUtils.grepWithRegex(text, REGEX_TO_GREP_URL);
     }
     
+    /**
+     * 提取引号包含的URL路径
+     * @param httpResponse
+     * @return
+     */
+	public static List<String> grepUrlsInQuotes(String text) {
+		return TextUtils.grepWithRegex(text, REGEX_TO_GREP_URL_IN_QUOTES,false,false,1);
+	}
 
     /**
      * 提取没有以/开头的URL path，误报较多，却有时候有用

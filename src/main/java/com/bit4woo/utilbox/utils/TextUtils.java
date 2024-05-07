@@ -63,7 +63,7 @@ public class TextUtils {
             while (true) {
                 try {
                     int oldlen = line.length();
-                    line = URLDecoder.decode(line,"UTF-8");
+                    line = URLDecoder.decode(line, "UTF-8");
                     int currentlen = line.length();
                     if (oldlen > currentlen) {
                         continue;
@@ -91,7 +91,7 @@ public class TextUtils {
             return false;
         }
     }
-  
+
 
     public static boolean needURLConvert(String str) {
         Pattern pattern = Pattern.compile("(%(\\p{XDigit}{2}))");
@@ -170,7 +170,7 @@ public class TextUtils {
      * @param multipleLine
      * @return
      */
-    public static List<String> grepWithRegex(String text, String regex, boolean caseSensitive, boolean multipleLine) {
+    public static List<String> grepWithRegex(String text, String regex, boolean caseSensitive, boolean multipleLine, int indexOfCapturingGroup) {
         List<String> result = new ArrayList<>();
         if (text == null || regex == null) {
             return result;
@@ -187,25 +187,31 @@ public class TextUtils {
         Pattern pRegex = Pattern.compile(regex, flags);
         Matcher matcher = pRegex.matcher(text);
         while (matcher.find()) {
-            result.add(matcher.group());
+            result.add(matcher.group(indexOfCapturingGroup));
         }
         return result;
     }
 
 
+    public static List<String> grepWithRegex(String text, String regex, boolean caseSensitive, boolean multipleLine) {
+        return grepWithRegex(text, regex, caseSensitive, multipleLine, 0);
+    }
+
+
     /**
-     * 默认忽略大小写，单行匹配
+     * 默认忽略大小写，单行匹配，捕获组的索引是0
      *
      * @param text
      * @param regex
      * @return
      */
     public static List<String> grepWithRegex(String text, String regex) {
-        return grepWithRegex(text, regex, false, false);
+        return grepWithRegex(text, regex, false, false, 0);
     }
 
     /**
      * 重后向前查找，替换匹配的第一个
+     *
      * @param string
      * @param toReplace
      * @param replacement
@@ -221,10 +227,10 @@ public class TextUtils {
             return string;
         }
     }
-    
+
     /**
-     * 
      * 各种替换场景：使用正则、不使用正则、替换第一个、替换全部
+     *
      * @param text
      * @param from
      * @param to
@@ -234,9 +240,9 @@ public class TextUtils {
      */
     public static String replace(String text, String from, String to, boolean replaceAll, boolean useRegex) {
         if (text == null || from == null || to == null || from.isEmpty()) {
-        	return text;
+            return text;
         }
-        
+
         if (!useRegex) {
             from = Pattern.quote(from);
         }
@@ -285,6 +291,7 @@ public class TextUtils {
     public static Boolean isRegexMatch(String text, String regex) {
         return isRegexMatch(text, regex, false, false);
     }
+
     /**
      * 获取随机字符串
      *
@@ -346,6 +353,7 @@ public class TextUtils {
 
     /**
      * 通过Pattern.quote处理后，就完全是普通字符串操作了，不是正则表达式了
+     *
      * @param input
      * @param Prefix
      * @param Suffix
@@ -398,12 +406,12 @@ public class TextUtils {
         }
         return result;
     }
-    
-    
+
+
     public static void main(String[] args) {
-    	
-    	String item = "aaa.bbb@ccc.com".replaceFirst(".*@", "");
-    	System.out.println(item);
+
+        String item = "aaa.bbb@ccc.com".replaceFirst(".*@", "");
+        System.out.println(item);
     }
 
 }

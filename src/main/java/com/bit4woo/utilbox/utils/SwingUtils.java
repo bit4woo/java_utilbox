@@ -51,5 +51,10 @@ public class SwingUtils {
 	public static List<String> getLinesFromTextArea(JTextArea textarea){
 		return TextUtils.textToLines(textarea.getText());
 	}
+	
+	
+	public static List<String> getDeduplicatedLinesFromTextArea(JTextArea textarea){
+		return TextUtils.deduplicate(TextUtils.textToLines(textarea.getText()));
+	}
 
 }

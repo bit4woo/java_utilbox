@@ -132,6 +132,24 @@ public class HelperPlus {
         }
     }
 
+
+    /**
+     * 新增或更新header
+     *
+     * @param headerLine header的一整行
+     */
+    public static List<String> addOrUpdateHeader(List<String> headers, String headerLine) {
+        if (headerLine.contains(":")) {
+            String[] parts = headerLine.split(Header_Spliter, 2);
+            if (parts.length == 2) {
+                String headerName = parts[0].trim();
+                String headerValue = parts[1].trim();
+                return addOrUpdateHeader(headers, headerName, headerValue);
+            }
+        }
+        return headers;
+    }
+
     /**
      * 新增或更新header
      */
@@ -155,6 +173,26 @@ public class HelperPlus {
         return headers;
     }
 
+
+    /**
+     * 新增或更新header
+     *
+     * @param headerLine header的一整行
+     */
+    public IHttpRequestResponse addOrUpdateHeader(boolean messageIsRequest, IHttpRequestResponse messageInfo, String headerLine) {
+        List<String> headers = getHeaderList(messageIsRequest, messageInfo);
+        byte[] body = getBody(messageIsRequest, messageInfo);
+        headers = addOrUpdateHeader(headers, headerLine);
+        byte[] RequestOrResponse = helpers.buildHttpMessage(headers, body);
+        if (messageIsRequest) {
+            messageInfo.setRequest(RequestOrResponse);
+        } else {
+            messageInfo.setResponse(RequestOrResponse);
+        }
+        return messageInfo;
+    }
+
+
     /**
      * 新增或更新header
      */
@@ -170,6 +208,18 @@ public class HelperPlus {
         }
         return messageInfo;
     }
+
+
+    /**
+     * 新增或更新header
+     */
+    public byte[] addOrUpdateHeader(boolean isRequest, byte[] requestOrResponse, String headerLine) {
+        List<String> headers = getHeaderList(isRequest, requestOrResponse);
+        byte[] body = getBody(isRequest, requestOrResponse);
+        headers = addOrUpdateHeader(headers, headerLine);
+        return helpers.buildHttpMessage(headers, body);
+    }
+
 
     /**
      * 新增或更新header
@@ -387,7 +437,6 @@ public class HelperPlus {
     }
 
     /**
-     *
      * @param service
      * @return http://www.baidu.com/  不包含默认端口；包含默认path(/)
      */
@@ -466,13 +515,13 @@ public class HelperPlus {
 
     /**
      * 1、这个函数的目的是：在【浏览器URL】的基础上，加上默认端口。
-     *
+     * <p>
      * https://www.baidu.com/ ---> https://www.baidu.com:443/
      * http://www.baidu.com ---> http://www.baidu.com:80/
-     *
+     * <p>
      * 在浏览器中，我们看到的是 baidu.com, 复制粘贴得到的是 https://www.baidu.com/
      * let url String contains default port(80\443) and default path(/)
-     *
+     * <p>
      * burp中获取到的URL是包含默认端口的，但是平常浏览器中的URL格式都是不包含默认端口的。
      * 应该尽量和平常使用习惯保存一致！所以尽量避免使用该函数。
      *
@@ -506,7 +555,7 @@ public class HelperPlus {
      * 2.add default path(/) to the url,if it's empty
      * 这个函数的目的是让URL的格式和通常从浏览器中复制的格式一致：
      * 在浏览器中，我们看到的是 baidu.com, 复制粘贴得到的是 https://www.baidu.com/
-     *
+     * <p>
      * 比如
      * http://bit4woo.com:80/ ---> http://bit4woo.com/
      * https://bit4woo.com:443 ---> https://bit4woo.com/
@@ -688,67 +737,67 @@ public class HelperPlus {
             return null;
         }
     }
-    
-	public String detectCharset(boolean isRequest, byte[] requestOrResponse){
-		
-		String contentType = getHeaderValueOf(isRequest,requestOrResponse,"Content-Type");
 
-		//1、尝试从contentTpye中获取
-		if (contentType != null){
-			if (contentType.toLowerCase().contains("charset=")) {
-				String tmpcharSet = contentType.toLowerCase().split("charset=")[1];
-				if (StringUtils.isNotEmpty(tmpcharSet)) {
-					return CharsetUtils.getCharsetName(tmpcharSet);
-				}
-			}
-		}
-		
-		String charset = detectCharsetInBody(isRequest,requestOrResponse);
-		if (StringUtils.isNotEmpty(charset)) {
-			return CharsetUtils.getCharsetName(charset);
-		}
-		
-		return CharsetUtils.detectCharset(requestOrResponse);
-	}
-	
-	/**
-	 * 尝试在响应包中寻找meta charset的标签，来判别响应包的编码
-	 * 
-	 * 一些常见格式：
-	 * <meta HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
-		<meta charset="UTF-8">
-		<meta charset="utf-8">
-		<meta charset=utf-8>
-		<meta http-equiv="Content-Language" content="zh-CN">
-		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-		<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-	 */
-	public static String detectCharsetInBody(boolean isRequest,byte[] requestOrResponse){
-		String body = new String(getBody(isRequest,requestOrResponse));
-		String pattern = "charset=(.*?)[\"/\\s>]+";//加? 非贪婪模式
+    public String detectCharset(boolean isRequest, byte[] requestOrResponse) {
 
-		Pattern metaCharset = Pattern.compile(pattern);
-		Matcher matcher = metaCharset.matcher(body);
-		if (matcher.find()) {//多次查找
-			String charset = matcher.group(1);
-			return charset;
-		}
-		return null;
-	}
-	
-	
-    public boolean isJSON(byte[] content,boolean isRequest) {
+        String contentType = getHeaderValueOf(isRequest, requestOrResponse, "Content-Type");
+
+        //1、尝试从contentTpye中获取
+        if (contentType != null) {
+            if (contentType.toLowerCase().contains("charset=")) {
+                String tmpcharSet = contentType.toLowerCase().split("charset=")[1];
+                if (StringUtils.isNotEmpty(tmpcharSet)) {
+                    return CharsetUtils.getCharsetName(tmpcharSet);
+                }
+            }
+        }
+
+        String charset = detectCharsetInBody(isRequest, requestOrResponse);
+        if (StringUtils.isNotEmpty(charset)) {
+            return CharsetUtils.getCharsetName(charset);
+        }
+
+        return CharsetUtils.detectCharset(requestOrResponse);
+    }
+
+    /**
+     * 尝试在响应包中寻找meta charset的标签，来判别响应包的编码
+     * <p>
+     * 一些常见格式：
+     * <meta HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+     * <meta charset="UTF-8">
+     * <meta charset="utf-8">
+     * <meta charset=utf-8>
+     * <meta http-equiv="Content-Language" content="zh-CN">
+     * <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+     * <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+     * <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+     */
+    public static String detectCharsetInBody(boolean isRequest, byte[] requestOrResponse) {
+        String body = new String(getBody(isRequest, requestOrResponse));
+        String pattern = "charset=(.*?)[\"/\\s>]+";//加? 非贪婪模式
+
+        Pattern metaCharset = Pattern.compile(pattern);
+        Matcher matcher = metaCharset.matcher(body);
+        if (matcher.find()) {//多次查找
+            String charset = matcher.group(1);
+            return charset;
+        }
+        return null;
+    }
+
+
+    public boolean isJSON(byte[] content, boolean isRequest) {
         if (isRequest) {
             IRequestInfo requestInfo = helpers.analyzeRequest(content);
             return requestInfo.getContentType() == IRequestInfo.CONTENT_TYPE_JSON;
         } else {
             IResponseInfo responseInfo = helpers.analyzeResponse(content);
-            
-			String dataType = responseInfo.getStatedMimeType().toLowerCase();
-			String inferDataType = responseInfo.getInferredMimeType().toLowerCase();
-			
-			return dataType.contains("json") || inferDataType.contains("json");
+
+            String dataType = responseInfo.getStatedMimeType().toLowerCase();
+            String inferDataType = responseInfo.getInferredMimeType().toLowerCase();
+
+            return dataType.contains("json") || inferDataType.contains("json");
         }
     }
 

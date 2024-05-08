@@ -1,5 +1,7 @@
 package com.bit4woo.utilbox.utils;
 
+import java.util.List;
+
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
@@ -43,6 +45,11 @@ public class SwingUtils {
 			return textArea.getText();
 		}
 		return null;
+	}
+	
+	
+	public static List<String> getLinesFromTextArea(JTextArea textarea){
+		return TextUtils.textToLines(textarea.getText());
 	}
 
 }

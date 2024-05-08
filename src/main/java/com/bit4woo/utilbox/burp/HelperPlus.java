@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -701,7 +703,38 @@ public class HelperPlus {
 			}
 		}
 		
+		String charset = detectCharsetInBody(isRequest,requestOrResponse);
+		if (StringUtils.isNotEmpty(charset)) {
+			return CharsetUtils.getCharsetName(charset);
+		}
+		
 		return CharsetUtils.detectCharset(requestOrResponse);
+	}
+	
+	/**
+	 * 尝试在响应包中寻找meta charset的标签，来判别响应包的编码
+	 * 
+	 * 一些常见格式：
+	 * <meta HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+		<meta charset="UTF-8">
+		<meta charset="utf-8">
+		<meta charset=utf-8>
+		<meta http-equiv="Content-Language" content="zh-CN">
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+		<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	 */
+	public static String detectCharsetInBody(boolean isRequest,byte[] requestOrResponse){
+		String body = new String(getBody(isRequest,requestOrResponse));
+		String pattern = "charset=(.*?)[\"/\\s>]+";//加? 非贪婪模式
+
+		Pattern metaCharset = Pattern.compile(pattern);
+		Matcher matcher = metaCharset.matcher(body);
+		if (matcher.find()) {//多次查找
+			String charset = matcher.group(1);
+			return charset;
+		}
+		return null;
 	}
 	
 	

@@ -5,12 +5,15 @@ import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.io.*;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Map;
+
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * 常用操作系统操作：打开浏览器、打开文件夹、操作剪切板等
@@ -30,29 +33,35 @@ public class SystemUtils {
     }
 
 
-    public static void browserOpen(Object url, String browser) throws Exception {
+    public static void browserOpen(Object url, String browser){
         String urlString = null;
         URI uri = null;
-        if (url instanceof String) {
-            urlString = (String) url;
-            uri = new URI((String) url);
-        } else if (url instanceof URL) {
-            uri = ((URL) url).toURI();
-            urlString = url.toString();
-        }
-        if (browser == null || browser.equalsIgnoreCase("default") || browser.equalsIgnoreCase("")) {
-            //whether null must be the first
-            Desktop desktop = Desktop.getDesktop();
-            if (Desktop.isDesktopSupported() && desktop.isSupported(Desktop.Action.BROWSE)) {
-                desktop.browse(uri);
-            }
-        } else {
-            String[] cmdArray = new String[]{browser, urlString};
+        try {
+			if (url instanceof String) {
+			    urlString = (String) url;
+			    uri = new URI((String) url);
+			} else if (url instanceof URL) {
+			    uri = ((URL) url).toURI();
+			    urlString = url.toString();
+			}
+			if (StringUtils.isEmpty(browser)|| browser.equalsIgnoreCase("default")) {
+			    Desktop desktop = Desktop.getDesktop();
+			    if (Desktop.isDesktopSupported() && desktop.isSupported(Desktop.Action.BROWSE)) {
+			        desktop.browse(uri);
+			    }
+			} else {
+			    String[] cmdArray = new String[]{browser, urlString};
 
-            //runtime.exec(browser+" "+urlString);//当命令中有空格时会有问题
-            Runtime.getRuntime().exec(cmdArray);
-        }
+			    //runtime.exec(browser+" "+urlString);//当命令中有空格时会有问题
+			    Runtime.getRuntime().exec(cmdArray);
+			}
+		} catch (URISyntaxException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
     }
+    
 
     public static boolean isWindows() {
         String OS_NAME = System.getProperty("os.name").toLowerCase();

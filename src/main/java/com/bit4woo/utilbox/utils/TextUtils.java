@@ -441,6 +441,34 @@ public class TextUtils {
         }
         return result;
     }
+    
+    /**
+     * 判断text是否包含了至少某一个关键词。在text和keyword都是有效字符串（不为null，!=""）的情况下进行判断。
+     * @param text
+     * @param keywords
+     * @param caseSensitive
+     * @return
+     */
+    public static boolean containsAny(String text,List<String> keywords,boolean caseSensitive) {
+        if (StringUtils.isEmpty(text) || keywords.isEmpty()) {
+            return false;
+        }
+        for (String keyword:keywords) {
+        	if (StringUtils.isEmpty(keyword)) {
+        		continue;
+        	}
+        	if (caseSensitive) {
+            	if (text.contains(keyword)) {
+            		return true;
+            	}
+        	}else {
+        		if (text.toLowerCase().contains(keyword.toLowerCase())) {
+        			return true;
+            	}
+        	}
+        }
+        return false;
+    }
 
 
     public static void main(String[] args) {

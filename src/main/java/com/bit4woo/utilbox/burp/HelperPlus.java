@@ -801,6 +801,43 @@ public class HelperPlus {
         }
     }
 
+    /**
+     * 判断数据包的内容，是否是HTML（主要用于判断响应包）
+     *
+     * @param content
+     * @param isRequest
+     * @return
+     */
+    public boolean isHtml(byte[] content, boolean isRequest) {
+        if (isRequest) {
+            return false;
+        } else {
+            IResponseInfo responseInfo = helpers.analyzeResponse(content);
+            String dataType = responseInfo.getStatedMimeType().toLowerCase();
+            String inferDataType = responseInfo.getInferredMimeType().toLowerCase();
+            return dataType.contains("html") || inferDataType.contains("html");
+        }
+    }
+
+
+    /**
+     * 判断数据包的内容，是否是JavaScript（主要用于判断响应包）
+     *
+     * @param content
+     * @param isRequest
+     * @return
+     */
+    public boolean isJavaScript(byte[] content, boolean isRequest) {
+        if (isRequest) {
+            return false;
+        } else {
+            IResponseInfo responseInfo = helpers.analyzeResponse(content);
+            String dataType = responseInfo.getStatedMimeType().toLowerCase();
+            String inferDataType = responseInfo.getInferredMimeType().toLowerCase();
+            return dataType.contains("javascript") || inferDataType.contains("javascript");
+        }
+    }
+
     public String getHTTPBasicCredentials(IHttpRequestResponse messageInfo) throws Exception {
         String authHeader = getHeaderValueOf(true, messageInfo, "Authorization").trim();
         String[] parts = authHeader.split("\\s");

@@ -35,46 +35,6 @@ public class UrlUtils {
             + ")"
             + "(?:\"|')";
 
-    public static void main(String[] args) throws MalformedURLException {
-        String aaa = "https://api.example.vn:443/Execute#1653013013763 /*";
-        String bbb = "https://api.example.vn/Execute#1653013013763";
-        String ccc = "      routes: [\r\n"
-                + "        {\r\n"
-                + "          path: '/home',\r\n"
-                + "          name: 'home',\r\n"
-                + "          component: function () {\r\n"
-                + "            return o.e('chunk-xxx').then(o.bind(null, 'xxx'))\r\n"
-                + "          },\r\n"
-                + "          meta: {\r\n"
-                + "          }\r\n"
-                + "        },\r\n"
-                + "        {\r\n"
-                + "          path: '/',\r\n"
-                + "          redirect: '/home'\r\n"
-                + "        },\r\n"
-                + "        {\r\n"
-                + "          path: '/index.html',\r\n"
-                + "          redirect: '/home'\r\n"
-                + "        },\r\n"
-                + "        {\r\n"
-                + "          path: '/web/index.html',\r\n"
-                + "          redirect: '/home'\r\n"
-                + "        }"
-                + "'/home111'"
-                + "'http://www.home111.com/aaa/bbb'";
-
-        String url1 = "http://www.example.com";
-        String url2 = "https://www.example.com:8080";
-        String url3 = "ftp://www.example.com:21/files#1111";
-        //System.out.println(url2.split("#")[0]);
-
-        //System.out.println(grepUrls(ccc));
-        System.out.println(grepUrlsInQuotes(ccc));
-        System.out.println(grepUrls(ccc));
-        System.out.println(grepUrlsWithProtocol(ccc));
-        //System.out.println(grepURL1(ccc));
-    }
-
 
     /**
      * 返回URL中的host，如果出错返回原始值
@@ -342,4 +302,47 @@ public class UrlUtils {
         }
         return false;
     }
+    
+    
+    public static void main(String[] args) throws MalformedURLException {
+        String aaa = "https://api.example.vn:443/Execute#1653013013763 /*";
+        String bbb = "https://api.example.vn/Execute#1653013013763";
+        String ccc = "      routes: [\r\n"
+                + "        {\r\n"
+                + "          path: '/home',\r\n"
+                + "          name: 'home',\r\n"
+                + "          component: function () {\r\n"
+                + "            return o.e('chunk-xxx').then(o.bind(null, 'xxx'))\r\n"
+                + "          },\r\n"
+                + "          meta: {\r\n"
+                + "          }\r\n"
+                + "        },\r\n"
+                + "        {\r\n"
+                + "          path: '/',\r\n"
+                + "          redirect: '/home'\r\n"
+                + "        },\r\n"
+                + "        {\r\n"
+                + "          path: '/index.html',\r\n"
+                + "          redirect: '/home'\r\n"
+                + "        },\r\n"
+                + "        {\r\n"
+                + "          path: '/web/index.html',\r\n"
+                + "          redirect: '/home'\r\n"
+                + "        }"
+                + "'/home111'"
+                + "'http://www.home111.com/aaa/bbb'";
+
+        String url1 = "http://www.example.com";
+        String url2 = "https://www.example.com:8080";
+        String url3 = "ftp://www.example.com:21/files#1111";
+        //System.out.println(url2.split("#")[0]);
+
+        //System.out.println(grepUrls(ccc));
+        System.out.println(grepUrlsInQuotes(ccc));
+        System.out.println(grepUrls(ccc));
+        System.out.println(grepUrlsWithProtocol(ccc));
+        System.out.println(removeUrlDefaultPort(url3));
+        //System.out.println(grepURL1(ccc));
+    }
+
 }

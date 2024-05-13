@@ -8,15 +8,12 @@ public class ByteArrayUtils {
     /**
      * byte[]数组截取
      * srcPoC 是原数组的起始位置，length是要截取的长度
-     *
      */
-    public static byte[] subByte(byte[] b,int srcPos,int length){
+    public static byte[] subByte(byte[] b, int srcPos, int length) {
         byte[] b1 = new byte[length];
         System.arraycopy(b, srcPos, b1, 0, length);
         return b1;
     }
-
-
 
 
     public static String getSystemCharSet() {
@@ -26,38 +23,35 @@ public class ByteArrayUtils {
     }
 
 
-
     /**
      * 将10进制转换为16进制
+     *
      * @param decimal 10进制
      * @return 16进制
      */
     public static String decimalToHex(int decimal) {
         String hex = Integer.toHexString(decimal);
-        return  hex.toUpperCase();
+        return hex.toUpperCase();
     }
 
 
     /**
      * 拼接多个byte[]数组的方法
+     *
      * @param arrays
      * @return
      */
-    public static byte[] join(byte[]... arrays)
-    {
+    public static byte[] join(byte[]... arrays) {
         int len = 0;
-        for (byte[] arr : arrays)
-        {
+        for (byte[] arr : arrays) {
             len += arr.length;//计算多个数组的长度总和
         }
 
         byte[] result = new byte[len];
         int idx = 0;
 
-        for (byte[] arr : arrays)
-        {
-            for (byte b : arr)
-            {
+        for (byte[] arr : arrays) {
+            for (byte b : arr) {
                 result[idx++] = b;
             }
         }
@@ -99,7 +93,7 @@ public class ByteArrayUtils {
 
         int j = 0;
         for (int i = 1; i < pattern.length; i++) {
-            while (j>0 && pattern[j] != pattern[i]) {
+            while (j > 0 && pattern[j] != pattern[i]) {
                 j = failure[j - 1];
             }
             if (pattern[j] == pattern[i]) {
@@ -109,5 +103,22 @@ public class ByteArrayUtils {
         }
 
         return failure;
+    }
+
+    public boolean equals(byte[] a, byte[] b) {
+        if (a == null || b == null) {
+            return false;
+        }
+
+        if (a.length != b.length) {
+            return false;
+        }
+
+        for (int i = 0; i < a.length; i++) {
+            if (a[i] != b[i]) {
+                return false;
+            }
+        }
+        return true;
     }
 }

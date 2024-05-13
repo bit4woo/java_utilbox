@@ -131,7 +131,8 @@ public class JsonUtils {
 				result.addAll(grepValueFromJson(item,keyName));
 			}
 		}else {
-			String reg = String.format("\"%s\":[\\s]*[\"]{0,1}(.*?)[\"]{0,1}[,}]+", keyName);
+			//一个字段的结束位置，可能是逗号，右括号或者换行符
+			String reg = String.format("\"%s\":[\\s]*[\"]{0,1}(.*?)[\"]{0,1}[,}\n\r]+", keyName);
 
 			Pattern pattern = Pattern.compile(reg);
 			Matcher matcher = pattern.matcher(jsonString);
@@ -191,8 +192,13 @@ public class JsonUtils {
 
 
 	public static void main(String[] args) {
-		String aaa = "{\"country\":\"\\u65b0\\u52a0\\u5761\",\"province\":\"\\u65b0\\u52a0\\u5761\",\"city\":\"\\u65b0\\u52a0\\u5761\",\"updated_at\":\"2024-03-27\",\"is_web\":\"是\",\"as_org\":\"亚马逊\",\"isp\":\"亚马逊\"}";
-		System.out.println(aaa);
-		System.out.println(pretty(aaa));
+		String aaa = "aaa";
+//		System.out.println(aaa);
+		try {
+			System.out.println(grepValueFromJson(aaa,"password"));
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 }

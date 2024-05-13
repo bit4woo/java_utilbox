@@ -834,7 +834,7 @@ public class HelperPlus {
             IResponseInfo responseInfo = helpers.analyzeResponse(content);
             String dataType = responseInfo.getStatedMimeType().toLowerCase();
             String inferDataType = responseInfo.getInferredMimeType().toLowerCase();
-            return dataType.contains("javascript") || inferDataType.contains("javascript");
+            return dataType.contains("script") || inferDataType.contains("script");
         }
     }
 

@@ -105,7 +105,7 @@ public class ByteArrayUtils {
         return failure;
     }
 
-    public boolean equals(byte[] a, byte[] b) {
+    public static boolean equals(byte[] a, byte[] b) {
         if (a == null || b == null) {
             return false;
         }

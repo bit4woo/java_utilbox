@@ -498,6 +498,20 @@ public class HelperPlus {
             return null;
         }
     }
+    
+    
+    public final URL getFullURL(IHttpService httpService, byte[] request) {
+        if (null == request) return null;
+        IRequestInfo analyzeRequest = helpers.analyzeRequest(httpService,request);
+        String tmpurl = analyzeRequest.getUrl().toString();
+        tmpurl = removeUrlDefaultPort(tmpurl);
+        try {
+            return new URL(tmpurl);
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
 
     /**
      * return Type is URL,not String.

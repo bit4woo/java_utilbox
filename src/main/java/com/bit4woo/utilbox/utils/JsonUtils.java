@@ -141,6 +141,17 @@ public class JsonUtils {
 				//System.out.println("111"+item+"111");
 				result.add(item);
 			}
+			
+			String reg1 = String.format("\'%s\':[\\s]*[\']{0,1}(.*?)[\']{0,1}[,}]+", keyName);
+			//JSON 标准中定义了字符串必须使用双引号（"）来包裹，因此在合法的 JSON 中，字符串不能使用单引号。
+			//但是实际情况存在使用单引号的情形！
+			Pattern pattern1 = Pattern.compile(reg1);
+			Matcher matcher1 = pattern1.matcher(jsonString);
+			while (matcher1.find()) {//多次查找
+				String item = matcher1.group(1);
+				//System.out.println("111"+item+"111");
+				result.add(item);
+			}
 		}
 		return result;
 	}

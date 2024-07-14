@@ -520,17 +520,21 @@ public class DomainUtils {
         System.out.println(isValidWildCardDomain("*.*"));
         System.out.println(isValidWildCardDomain("aaaaaaaaa-aaaaaaaaaaaaaaa-aaaaaaaaaaaaaa.www1.baidu.com"));
     }
+    public static void test() {
+	    System.out.println(isWhiteListTLD("test.example.co.th","example.com"));
+		System.out.println(isValidDomainMayPort("test-api.xxx.services:22"));
+		System.out.println(grepDomainAndPort("*.baidu.com"));
+		System.out.println(grepDomainAndPort("aaa _sip._tcp.example.com bbb"));
+		System.out.println(grepDomainAndPort("aaa _sip._tcp.example.com:222 bbb"));
+		System.out.println(grepDomainAndPort("aaa selector._domainkey.example.com bbb"));
+    }
 
 
     public static void main(String[] args) {
-        System.out.println(isWhiteListTLD("test.example.co.th","example.com"));
-    	System.out.println(isValidDomainMayPort("test-api.xxx.services:22"));
-    	System.out.println(grepDomainAndPort("*.baidu.com"));
-    	System.out.println(grepDomainAndPort("aaa _sip._tcp.example.com bbb"));
-    	System.out.println(grepDomainAndPort("aaa _sip._tcp.example.com:222 bbb"));
-        System.out.println(grepDomainAndPort("aaa selector._domainkey.example.com bbb"));
-        testWild();
 
+        System.out.println(getRootDomain("ec2-43-204-181-121.ap-south-1.compute.amazonaws.com"));
+        testWild();
+        	
         //System.out.println(isValidWildCardDomain("aaaaaaaaa-aaaaaaaaaaaaaaa-aaaaaaaaaaaaaa.www1.baidu.com"));
         //System.out.println(dnsquery("www.google1.com",null));
     }

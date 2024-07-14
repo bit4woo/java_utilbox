@@ -527,6 +527,7 @@ public class DomainUtils {
     	System.out.println(isValidDomainMayPort("test-api.xxx.services:22"));
     	System.out.println(grepDomainAndPort("*.baidu.com"));
     	System.out.println(grepDomainAndPort("aaa _sip._tcp.example.com bbb"));
+    	System.out.println(grepDomainAndPort("aaa _sip._tcp.example.com:222 bbb"));
         System.out.println(grepDomainAndPort("aaa selector._domainkey.example.com bbb"));
         testWild();
 

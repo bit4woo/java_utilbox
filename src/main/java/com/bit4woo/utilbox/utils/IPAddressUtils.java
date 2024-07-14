@@ -23,6 +23,8 @@ import inet.ipaddr.IPAddressString;
  */
 public class IPAddressUtils {
 	
+	
+	
 	//和RegexUtils.IP_ADDRESS_STRING一模一样
     public static final String REGEX_TO_GREP_IP_ADDRESS_STRING_NO_PORT =
             "((25[0-5]|2[0-4][0-9]|[0-1][0-9]{2}|[1-9][0-9]|[1-9])\\.(25[0-5]|2[0-4]"
@@ -30,8 +32,11 @@ public class IPAddressUtils {
                     + "[0-9]{2}|[1-9][0-9]|[1-9]|0)\\.(25[0-5]|2[0-4][0-9]|[0-1][0-9]{2}"
                     + "|[1-9][0-9]|[0-9]))";
     
+    //private static final String Port_base_regex = "(?::\\d{1,5})?";
+  	private static final String Port_base_regex = "(:\\d{1,5})?";
+  	
     public static final String REGEX_TO_GREP_IP_ADDRESS_STRING_MAY_WITH_PORT =
-            REGEX_TO_GREP_IP_ADDRESS_STRING_NO_PORT + "(?::\\d{1,5})?";
+            REGEX_TO_GREP_IP_ADDRESS_STRING_NO_PORT + Port_base_regex;
     
     
     public static final String REGEX_TO_GREP_SUBNET = "\\d{1,3}(?:\\.\\d{1,3}){3}(?:/\\d{1,2})?";

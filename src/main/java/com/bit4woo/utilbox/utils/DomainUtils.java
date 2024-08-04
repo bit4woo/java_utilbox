@@ -27,45 +27,44 @@ public class DomainUtils {
     /**
      * 可能有xxx.services，xxx.international这样的域名,适当提高长度
      * (?!-) 不能以连字符（-）开头；(?<!-)确保标签不会以连字符（-）结尾。
-     * 
+     *
      * 虽然按照RFC的规定，域名的单个字符的模块长度可以是63。但是实际使用情况中，基本不可能有这样的域名，故将长度设置为32（a86ba224e43010880724df4a4be78c11、administratoradministrator）。
-     * 
+     *
      */
-	//private static final String Domain_name_base_regex_1 = "((?!-)[A-Za-z0-9-]{1,32}(?<!-)\\.)+[A-Za-z]{2,11}";
-	
-	
-	/**
-	 *
-	 * 虽然标准域名规定不能包含下划线，但是实际情况中有这类域名存在，而且可以正确解析！！！
-	 * 允许包含下划线的域名，selector._domainkey.example.com、 _sip._tcp.example.com
-	 */
-	private static final String Domain_name_base_regex = "((?!-)[A-Za-z0-9-_]{1,32}(?<!-)\\.)+[A-Za-z]{2,11}";
-	
-	/**
-	 * (?: xxx )非捕获组的语法，这里可以不使用
-	 * 末尾的？表示零次或一次。
-	 */
-	//private static final String Port_base_regex = "(?::\\d{1,5})?";
-	private static final String Port_base_regex = "(:\\d{1,5})?";
-	
-	
-	/**
-	 * 用于校验和用于匹配的正则表达式之间的差异通常在于是否使用了开头的 ^ 和结尾的 $ 符号
-	 * 用于校验的正则表达式通常会使用 ^ 和 $ 来确保整个字符串完全匹配模式。这意味着整个字符串必须符合正则表达式的规则。
-	 * 用于匹配的正则表达式通常不需要 ^ 和 $，因为它们只需要找到符合模式的部分字符串。
-	 */
-    public static final String REGEX_TO_VAILDATE_DOMAIN_NAME_MAY_WITH_PORT = "^"+Domain_name_base_regex+Port_base_regex+"$";
-    public static final String REGEX_TO_VAILDATE_DOMAIN_NAME_NO_PORT = "^"+Domain_name_base_regex+"$";
+    //private static final String Domain_name_base_regex_1 = "((?!-)[A-Za-z0-9-]{1,32}(?<!-)\\.)+[A-Za-z]{2,11}";
 
-    
-    public static final String REGEX_TO_GREP_DOMAIN_NAME_NO_PORT = Domain_name_base_regex;
-    public static final String REGEX_TO_GREP_DOMAIN_NAME_MAY_WITH_PORT = Domain_name_base_regex+Port_base_regex;
 
     /**
-     * 	和Domain_name_base_regex的正则进行比较：多了*号
-     * 
-     * 	加*号是为了匹配 类似 *.baidu.com的这种域名记录。
-	 * 	这里的 * 出现在字符集 [A-Za-z0-9-_*.] 中间，它不会被解释为正则表达式的特殊字符，因此不需要进行转义。在字符集内部，大多数特殊字符（如 *、+、- 等）都不需要转义，它们只表示它们自己的字面意思。
+     * 虽然标准域名规定不能包含下划线，但是实际情况中有这类域名存在，而且可以正确解析！！！
+     * 允许包含下划线的域名，selector._domainkey.example.com、 _sip._tcp.example.com
+     */
+    private static final String Domain_name_base_regex = "((?!-)[A-Za-z0-9-_]{1,32}(?<!-)\\.)+[A-Za-z]{2,11}";
+
+    /**
+     * (?: xxx )非捕获组的语法，这里可以不使用
+     * 末尾的？表示零次或一次。
+     */
+    //private static final String Port_base_regex = "(?::\\d{1,5})?";
+    private static final String Port_base_regex = "(:\\d{1,5})?";
+
+
+    /**
+     * 用于校验和用于匹配的正则表达式之间的差异通常在于是否使用了开头的 ^ 和结尾的 $ 符号
+     * 用于校验的正则表达式通常会使用 ^ 和 $ 来确保整个字符串完全匹配模式。这意味着整个字符串必须符合正则表达式的规则。
+     * 用于匹配的正则表达式通常不需要 ^ 和 $，因为它们只需要找到符合模式的部分字符串。
+     */
+    public static final String REGEX_TO_VAILDATE_DOMAIN_NAME_MAY_WITH_PORT = "^" + Domain_name_base_regex + Port_base_regex + "$";
+    public static final String REGEX_TO_VAILDATE_DOMAIN_NAME_NO_PORT = "^" + Domain_name_base_regex + "$";
+
+
+    public static final String REGEX_TO_GREP_DOMAIN_NAME_NO_PORT = Domain_name_base_regex;
+    public static final String REGEX_TO_GREP_DOMAIN_NAME_MAY_WITH_PORT = Domain_name_base_regex + Port_base_regex;
+
+    /**
+     * 和Domain_name_base_regex的正则进行比较：多了*号
+     * <p>
+     * 加*号是为了匹配 类似 *.baidu.com的这种域名记录。
+     * 这里的 * 出现在字符集 [A-Za-z0-9-_*.] 中间，它不会被解释为正则表达式的特殊字符，因此不需要进行转义。在字符集内部，大多数特殊字符（如 *、+、- 等）都不需要转义，它们只表示它们自己的字面意思。
      */
     public static final String REGEX_TO_VAILD_WILDCARD_DOMAIN_NAME = "^((?!-)[A-Za-z0-9-_*]{1,32}(?<!-)\\.)+([A-Za-z*]{1,11})$";
 
@@ -306,27 +305,21 @@ public class DomainUtils {
      */
     public static String getRootDomain(String inputDomain) {
         inputDomain = DomainUtils.clearDomainWithoutPort(inputDomain);
+        String result;
         try {
-            return InternetDomainName.from(inputDomain).topPrivateDomain().toString();
+            result = InternetDomainName.from(inputDomain).topPrivateDomain().toString();
         } catch (Exception e) {
-            //InternetDomainName.from("www.jd.local").topPrivateDomain()//Not under a public suffix: www.jd.local
-            Set<String> customPublicSuffixes = new HashSet<>();
-            customPublicSuffixes.add("inner");
-            customPublicSuffixes.add("local");
-
-            int lastIndex = inputDomain.lastIndexOf(".");
-            if (lastIndex != -1 && lastIndex + 1 <= inputDomain.length()) {
-                String suffix = inputDomain.substring(lastIndex + 1);
-                System.out.println(suffix);
-                if (customPublicSuffixes.contains(suffix)) {
-                    int secondLastIndex = inputDomain.lastIndexOf(".", lastIndex - 1);
-                    if (secondLastIndex != -1 && secondLastIndex + 1 <= inputDomain.length()) {
-                        return inputDomain.substring(secondLastIndex + 1);
-                    }
-                }
-            }
+            result = inputDomain;
         }
-        return inputDomain;
+
+        //针对一些特殊情况，比如：example.inner\example.local\ec2-43-204-181-xx.ap-south-1.compute.amazonaws.com
+        int dotCount = StringUtils.countMatches(inputDomain, ".");
+        if (dotCount > 2) {
+            int secondLastIndex = TextUtils.getNthOccurrencePosition(inputDomain, ".", -2);
+            result = inputDomain.substring(secondLastIndex + 1);
+        }
+
+        return result;
     }
 
     /**
@@ -422,7 +415,7 @@ public class DomainUtils {
 
         try {
             if (isTLDDomain(domain, rootDomain)) {
-                String suffixOfDomain = InternetDomainName.from(domain).publicSuffix().toString();//没有保护点号
+                String suffixOfDomain = InternetDomainName.from(domain).publicSuffix().toString();//没有包含点号
                 String[] items = suffixOfDomain.split("\\.");
                 for (String item : items) {
                     if (!tlds.contains("." + item)) {
@@ -520,21 +513,22 @@ public class DomainUtils {
         System.out.println(isValidWildCardDomain("*.*"));
         System.out.println(isValidWildCardDomain("aaaaaaaaa-aaaaaaaaaaaaaaa-aaaaaaaaaaaaaa.www1.baidu.com"));
     }
+
     public static void test() {
-	    System.out.println(isWhiteListTLD("test.example.co.th","example.com"));
-		System.out.println(isValidDomainMayPort("test-api.xxx.services:22"));
-		System.out.println(grepDomainAndPort("*.baidu.com"));
-		System.out.println(grepDomainAndPort("aaa _sip._tcp.example.com bbb"));
-		System.out.println(grepDomainAndPort("aaa _sip._tcp.example.com:222 bbb"));
-		System.out.println(grepDomainAndPort("aaa selector._domainkey.example.com bbb"));
+        System.out.println(isWhiteListTLD("test.example.co.th", "example.com"));
+        System.out.println(isValidDomainMayPort("test-api.xxx.services:22"));
+        System.out.println(grepDomainAndPort("*.baidu.com"));
+        System.out.println(grepDomainAndPort("aaa _sip._tcp.example.com bbb"));
+        System.out.println(grepDomainAndPort("aaa _sip._tcp.example.com:222 bbb"));
+        System.out.println(grepDomainAndPort("aaa selector._domainkey.example.com bbb"));
     }
 
 
     public static void main(String[] args) {
 
         System.out.println(getRootDomain("ec2-43-204-181-121.ap-south-1.compute.amazonaws.com"));
-        testWild();
-        	
+        //testWild();
+
         //System.out.println(isValidWildCardDomain("aaaaaaaaa-aaaaaaaaaaaaaaa-aaaaaaaaaaaaaa.www1.baidu.com"));
         //System.out.println(dnsquery("www.google1.com",null));
     }

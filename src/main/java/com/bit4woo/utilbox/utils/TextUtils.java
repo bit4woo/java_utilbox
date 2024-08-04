@@ -151,26 +151,26 @@ public class TextUtils {
      * @param input
      * @return
      */
-    public static List<String> textToLines(String input,boolean removeEmpty,boolean doTrim) {
-    	List<String> result = new ArrayList<String>();
-    	if (input ==null) return result;
-    	
+    public static List<String> textToLines(String input, boolean removeEmpty, boolean doTrim) {
+        List<String> result = new ArrayList<String>();
+        if (input == null) return result;
+
         String[] lines = input.split("(\r\n|\r|\n)", -1);
         for (String line : lines) {
-        	if (doTrim) {
-        		line = line.trim();
-        	}
-            
+            if (doTrim) {
+                line = line.trim();
+            }
+
             if (removeEmpty && StringUtils.isEmpty(line)) {
                 continue;
-            }else {
-            	result.add(line.trim());
+            } else {
+                result.add(line.trim());
             }
         }
         return result;
     }
-    
-    
+
+
     /**
      * 默认删除空字符串、并且trim
      *
@@ -178,7 +178,7 @@ public class TextUtils {
      * @return
      */
     public static List<String> textToLines(String input) {
-    	return textToLines(input,true,true);
+        return textToLines(input, true, true);
     }
 
     /**
@@ -409,19 +409,19 @@ public class TextUtils {
             return result;
         }
     }
-    
-    
-    public static List<String> deduplicate(List<String> input) {
-    	List<String> result = new ArrayList<String>();
 
-    	for (String item : input) {
-    		if (result.contains(item)) {
-    			continue;
-    		} else {
-    			result.add(item);
-    		}
-    	}//不在使用set方法去重，以便保持去重后的顺序！
-    	return result;
+
+    public static List<String> deduplicate(List<String> input) {
+        List<String> result = new ArrayList<String>();
+
+        for (String item : input) {
+            if (result.contains(item)) {
+                continue;
+            } else {
+                result.add(item);
+            }
+        }//不在使用set方法去重，以便保持去重后的顺序！
+        return result;
     }
 
 
@@ -441,31 +441,65 @@ public class TextUtils {
         }
         return result;
     }
-    
+
+    /**
+     * 获取正数第N个或倒数第N个指定字符或子字符串的位置
+     *
+     * @param str        输入字符串
+     * @param target     要查找的字符或子字符串
+     * @param occurrence 正数第N个（正数），或者倒数第N个（负数）
+     * @return 指定字符或子字符串的位置，未找到返回 -1
+     */
+    public static int getNthOccurrencePosition(String str, String target, int occurrence) {
+        if (str == null || target == null || occurrence == 0) {
+            return -1;
+        }
+
+        if (occurrence > 0) {
+            // 正数第N个位置
+            int count = 0;
+            int index = -1;
+            while (occurrence > count && (index = str.indexOf(target, index + 1)) != -1) {
+                count++;
+            }
+            return count == occurrence ? index : -1;
+        } else {
+            // 倒数第N个位置
+            int count = 0;
+            int index = str.length();
+            while (Math.abs(occurrence) > count && (index = str.lastIndexOf(target, index - 1)) != -1) {
+                count++;
+            }
+            return count == Math.abs(occurrence) ? index : -1;
+        }
+    }
+
+
     /**
      * 判断text是否包含了至少某一个关键词。在text和keyword都是有效字符串（不为null，!=""）的情况下进行判断。
+     *
      * @param text
      * @param keywords
      * @param caseSensitive
      * @return
      */
-    public static boolean containsAny(String text,List<String> keywords,boolean caseSensitive) {
+    public static boolean containsAny(String text, List<String> keywords, boolean caseSensitive) {
         if (StringUtils.isEmpty(text) || keywords.isEmpty()) {
             return false;
         }
-        for (String keyword:keywords) {
-        	if (StringUtils.isEmpty(keyword)) {
-        		continue;
-        	}
-        	if (caseSensitive) {
-            	if (text.contains(keyword)) {
-            		return true;
-            	}
-        	}else {
-        		if (text.toLowerCase().contains(keyword.toLowerCase())) {
-        			return true;
-            	}
-        	}
+        for (String keyword : keywords) {
+            if (StringUtils.isEmpty(keyword)) {
+                continue;
+            }
+            if (caseSensitive) {
+                if (text.contains(keyword)) {
+                    return true;
+                }
+            } else {
+                if (text.toLowerCase().contains(keyword.toLowerCase())) {
+                    return true;
+                }
+            }
         }
         return false;
     }

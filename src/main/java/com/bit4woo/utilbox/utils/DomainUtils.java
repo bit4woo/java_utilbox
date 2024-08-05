@@ -313,7 +313,7 @@ public class DomainUtils {
         }
 
         //针对一些特殊情况，比如：example.inner\example.local\ec2-43-204-181-xx.ap-south-1.compute.amazonaws.com
-        int dotCount = StringUtils.countMatches(inputDomain, ".");
+        int dotCount = StringUtils.countMatches(result, ".");
         if (dotCount > 2) {
             int secondLastIndex = TextUtils.getNthOccurrencePosition(inputDomain, ".", -2);
             result = inputDomain.substring(secondLastIndex + 1);
@@ -526,7 +526,8 @@ public class DomainUtils {
 
     public static void main(String[] args) {
 
-        System.out.println(getRootDomain("ec2-43-204-181-121.ap-south-1.compute.amazonaws.com"));
+    	System.out.println(getRootDomain("ec2-43-204-181-121.ap-south-1.compute.amazonaws.com"));
+        System.out.println(getRootDomain("111.xxx.com.cn"));
         //testWild();
 
         //System.out.println(isValidWildCardDomain("aaaaaaaaa-aaaaaaaaaaaaaaa-aaaaaaaaaaaaaa.www1.baidu.com"));

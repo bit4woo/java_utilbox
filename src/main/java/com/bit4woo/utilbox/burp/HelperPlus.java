@@ -373,7 +373,7 @@ public class HelperPlus {
 	/**
 	 * 获取某个header的整行，如果没有此header，返回null，以header的名称作为查找依据。
 	 */
-	public String getHeaderLine(boolean messageIsRequest, IHttpRequestResponse messageInfo, String headerName) {
+	public static String getHeaderLine(boolean messageIsRequest, IHttpRequestResponse messageInfo, String headerName) {
 		List<String> headers = getHeaderList(messageIsRequest, messageInfo);
 		return getHeaderLine(headers, headerName);
 	}
@@ -381,7 +381,7 @@ public class HelperPlus {
 	/**
 	 * 获取某个header的整行，如果没有此header，返回null，以header的名称作为查找依据。
 	 */
-	public String getHeaderLine(boolean messageIsRequest, byte[] requestOrResponse, String headerName) {
+	public static String getHeaderLine(boolean messageIsRequest, byte[] requestOrResponse, String headerName) {
 		List<String> headers = getHeaderList(messageIsRequest, requestOrResponse);
 		return getHeaderLine(headers, headerName);
 	}
@@ -409,7 +409,7 @@ public class HelperPlus {
 	/**
 	 * 获取某个header的值，如果没有此header，返回null。
 	 */
-	public String getHeaderValueOf(boolean messageIsRequest, IHttpRequestResponse messageInfo, String headerName) {
+	public static String getHeaderValueOf(boolean messageIsRequest, IHttpRequestResponse messageInfo, String headerName) {
 		List<String> headers = getHeaderList(messageIsRequest, messageInfo);
 		return getHeaderValueOf(headers, headerName);
 	}
@@ -417,7 +417,7 @@ public class HelperPlus {
 	/**
 	 * 获取某个header的值，如果没有此header，返回null。
 	 */
-	public String getHeaderValueOf(boolean messageIsRequest, byte[] requestOrResponse, String headerName) {
+	public static String getHeaderValueOf(boolean messageIsRequest, byte[] requestOrResponse, String headerName) {
 		List<String> headers = getHeaderList(messageIsRequest, requestOrResponse);
 		return getHeaderValueOf(headers, headerName);
 	}

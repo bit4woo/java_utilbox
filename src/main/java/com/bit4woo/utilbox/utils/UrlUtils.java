@@ -65,7 +65,34 @@ public class UrlUtils {
             return -1;
         }
     }
+    
+    /**
+     * 不包含查询参数，纯路径
+     * @param urlStr
+     * @return
+     */
+    public static String getPath(String urlStr) {
+        try {
+            return new URL(urlStr).getPath();
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+            return urlStr;
+        }
+    }
 
+    /**
+     * 包含查询参数
+     * @param urlStr
+     * @return
+     */
+    public static String getFile(String urlStr) {
+        try {
+            return new URL(urlStr).getFile();
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+            return urlStr;
+        }
+    }
 
     public static boolean isVaildUrl(String urlString) {
         try {

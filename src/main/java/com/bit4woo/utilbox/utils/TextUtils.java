@@ -503,6 +503,63 @@ public class TextUtils {
         }
         return false;
     }
+    
+    
+    /**
+     * 计算两个字符串之间的相似度，基于 Levenshtein 编辑距离。
+     *
+     * @param str1 第一个字符串
+     * @param str2 第二个字符串
+     * @return 相似度，值在 0 到 1 之间，1 表示完全相同，0 表示完全不同
+     */
+    public static double calculateSimilarity(String str1, String str2) {
+        int len1 = str1.length();
+        int len2 = str2.length();
+
+        if (len1 == 0 && len2 == 0) {
+            return 1.0;  // 如果两个字符串都为空，返回完全相似
+        }
+
+        int editDistance = calculateLevenshteinDistance(str1, str2);
+        int maxLength = Math.max(len1, len2);
+
+        // 计算相似度：1 - (编辑距离 / 最大长度)
+        return 1 - (double) editDistance / maxLength;
+    }
+
+    /**
+     * 计算两个字符串的 Levenshtein 编辑距离。
+     *
+     * @param str1 第一个字符串
+     * @param str2 第二个字符串
+     * @return 编辑距离
+     */
+    private static int calculateLevenshteinDistance(String str1, String str2) {
+        int len1 = str1.length();
+        int len2 = str2.length();
+
+        int[][] dp = new int[len1 + 1][len2 + 1];
+
+        // 初始化DP表
+        for (int i = 0; i <= len1; i++) {
+            dp[i][0] = i;
+        }
+        for (int j = 0; j <= len2; j++) {
+            dp[0][j] = j;
+        }
+
+        // 动态规划计算编辑距离
+        for (int i = 1; i <= len1; i++) {
+            for (int j = 1; j <= len2; j++) {
+                int cost = (str1.charAt(i - 1) == str2.charAt(j - 1)) ? 0 : 1;
+                dp[i][j] = Math.min(dp[i - 1][j] + 1,       // 删除
+                            Math.min(dp[i][j - 1] + 1,     // 插入
+                                     dp[i - 1][j - 1] + cost)); // 替换
+            }
+        }
+
+        return dp[len1][len2];
+    }
 
 
     public static void main(String[] args) {

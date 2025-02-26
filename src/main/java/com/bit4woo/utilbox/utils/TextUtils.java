@@ -3,11 +3,13 @@ package com.bit4woo.utilbox.utils;
 import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+import java.util.Collection;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringEscapeUtils;
@@ -562,6 +564,28 @@ public class TextUtils {
     }
 
 
+	public static List<String> tirmAll(List<String> items){
+		List<String> result = new ArrayList<String>();
+		for (String item:items) {
+			result.add(item.trim());
+		}
+		return result;
+	}
+	
+	/**
+	 * 允许 T 既可以是 List<String>，也可以是 Set<String>，甚至可以扩展到其他 Collection<String> 类型（如 Queue<String>）
+	 */
+	public static <T extends Collection<String>> T removeAllEmpty(T items) {
+        Iterator<String> it = items.iterator();
+        while (it.hasNext()) {
+            if (StringUtils.isEmpty(it.next())) {
+                it.remove();
+            }
+        }
+        return items;
+    }
+	
+	
     public static void main(String[] args) {
 
         String item = "aaa.bbb@ccc.com".replaceFirst(".*@", "");

@@ -202,6 +202,30 @@ public class HelperPlus {
 		}
 		return messageInfo;
 	}
+	
+	/**
+	 * 更改header第一行的请求方式/PATH等
+	 * GET /api/search?q=aaa HTTP/1.1
+	 */
+	public static List<String> updateFirstLineOfHeaders(List<String> headers,String method,String path,String httpVersion){
+		String[] methodAndPath = headers.get(0).split(" ");//会得到三部分
+		if(method!=null){
+			methodAndPath[0] = method;
+		}
+		
+		if(path!=null){
+			methodAndPath[1] = path;
+		}
+		
+		if(httpVersion!=null){
+			methodAndPath[2] = httpVersion;
+		}
+		
+		String methodAndPathNew = String.join(" ", methodAndPath);
+		//System.out.println(methodAndPathNew);
+		headers.set(0,methodAndPathNew);
+		return headers;
+	}
 
 
 	/**

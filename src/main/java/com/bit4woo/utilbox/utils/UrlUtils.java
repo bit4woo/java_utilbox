@@ -214,6 +214,7 @@ public class UrlUtils {
             }
             return new URL(urlStr).toString();
         } catch (MalformedURLException e) {
+        	System.out.println("error URL--> "+urlStr);
             e.printStackTrace();
             return urlStr;
         }

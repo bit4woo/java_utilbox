@@ -200,25 +200,31 @@ public class UrlUtils {
     public static String addUrlDefaultPort(String urlStr) {
         try {
             URL url = new URL(urlStr);
+
+            String protocol = url.getProtocol();
             String host = url.getHost();
             int port = url.getPort();
-            String path = url.getPath();
+            String file = url.getFile();
 
+            if (file.isEmpty()) {
+                file = "/";
+            }
+
+            // 如果没指定端口，使用默认端口
             if (port == -1) {
-                String newHost = url.getHost() + ":" + url.getDefaultPort();
-                urlStr = urlStr.replaceFirst(host, newHost);
+                port = url.getDefaultPort();
             }
 
-            if (path.equals("")) {
-                urlStr = urlStr + "/";
-            }
-            return new URL(urlStr).toString();
+            // 重新构造新的 URL
+            URL newUrl = new URL(protocol, host, port, file);
+            return newUrl.toString();
+
         } catch (MalformedURLException e) {
-        	System.out.println("error URL--> "+urlStr);
             e.printStackTrace();
             return urlStr;
         }
     }
+
 
     /**
      * 1.remove default port(80\443) from the url
@@ -235,23 +241,32 @@ public class UrlUtils {
             URL url = new URL(urlString);
             String protocol = url.getProtocol();
             String host = url.getHost();
-            int port = url.getPort();//不包含端口时返回-1
-            String path = url.getPath();
+            int port = url.getPort();
+            String file = url.getFile(); // 包含 path + query
+            String ref = url.getRef();   // fragment
 
-            if ((port == 80 && protocol.equalsIgnoreCase("http")) || (port == 443 && protocol.equalsIgnoreCase("https"))) {
-                String oldHost = url.getHost() + ":" + url.getPort();
-                urlString = urlString.replaceFirst(oldHost, host);
+            // 如果是默认端口，去掉它
+            if ((protocol.equalsIgnoreCase("http") && port == 80)
+                    || (protocol.equalsIgnoreCase("https") && port == 443)) {
+                port = -1; // 表示不显式指定端口
             }
 
-            if (path.equals("")) {
-                urlString = urlString + "/";
+            // 重新构造 URL
+            URL newUrl = new URL(protocol, host, port, file);
+
+            // 保留 fragment (#xxx)
+            String result = newUrl.toString();
+            if (ref != null) {
+                result += "#" + ref;
             }
-            return new URL(urlString).toString();
+
+            return result;
         } catch (MalformedURLException e) {
             e.printStackTrace();
             return urlString;
         }
     }
+
 
     /**
      * 注意：

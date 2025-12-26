@@ -1,6 +1,7 @@
 package com.bit4woo.utilbox.utils;
 
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.util.List;
 
@@ -199,29 +200,70 @@ public class UrlUtils {
      */
     public static String addUrlDefaultPort(String urlStr) {
         try {
-            URL url = new URL(urlStr);
+            URI uri = new URI(urlStr);
 
-            String protocol = url.getProtocol();
-            String host = url.getHost();
-            int port = url.getPort();
-            String file = url.getFile();
+            String scheme = uri.getScheme();
+            String host = uri.getHost();
+            int port = uri.getPort();
+            String path = uri.getPath();
 
-            if (file.isEmpty()) {
-                file = "/";
+            if (host == null) {
+                return urlStr; // 非标准 URI（如 jdbc），直接返回
             }
 
-            // 如果没指定端口，使用默认端口
             if (port == -1) {
-                port = url.getDefaultPort();
+                Integer defaultPort = getDefaultPortByScheme(scheme);
+                if (defaultPort != null) {
+                    host = host + ":" + defaultPort;
+                }
             }
 
-            // 重新构造新的 URL
-            URL newUrl = new URL(protocol, host, port, file);
-            return newUrl.toString();
+            if (path == null || path.isEmpty()) {
+                path = "/";
+            }
 
-        } catch (MalformedURLException e) {
+            URI newUri = new URI(
+                    scheme,
+                    uri.getUserInfo(),
+                    host,
+                    -1,
+                    path,
+                    uri.getQuery(),
+                    uri.getFragment()
+            );
+
+            return newUri.toString();
+        } catch (Exception e) {
+            System.out.println("error URL--> " + urlStr);
             e.printStackTrace();
             return urlStr;
+        }
+    }
+
+
+    private static Integer getDefaultPortByScheme(String scheme) {
+        if (scheme == null) {
+            return null;
+        }
+        switch (scheme.toLowerCase()) {
+            case "http":
+                return 80;
+            case "https":
+                return 443;
+            case "ssh":
+                return 22;
+            case "ftp":
+                return 21;
+            case "sftp":
+                return 22;
+            case "redis":
+                return 6379;
+            case "mysql":
+                return 3306;
+            case "postgresql":
+                return 5432;
+            default:
+                return null;
         }
     }
 
@@ -238,34 +280,53 @@ public class UrlUtils {
      */
     public static String removeUrlDefaultPort(String urlString) {
         try {
-            URL url = new URL(urlString);
-            String protocol = url.getProtocol();
-            String host = url.getHost();
-            int port = url.getPort();
-            String file = url.getFile(); // 包含 path + query
-            String ref = url.getRef();   // fragment
-
-            // 如果是默认端口，去掉它
-            if ((protocol.equalsIgnoreCase("http") && port == 80)
-                    || (protocol.equalsIgnoreCase("https") && port == 443)) {
-                port = -1; // 表示不显式指定端口
+            // jdbc URL 非标准，直接跳过
+            if (urlString.startsWith("jdbc:")) {
+                return urlString;
             }
 
-            // 重新构造 URL
-            URL newUrl = new URL(protocol, host, port, file);
+            URI uri = new URI(urlString);
 
-            // 保留 fragment (#xxx)
-            String result = newUrl.toString();
-            if (ref != null) {
-                result += "#" + ref;
+            String scheme = uri.getScheme();
+            String userInfo = uri.getUserInfo();
+            String host = uri.getHost();
+            int port = uri.getPort();
+            String path = uri.getPath();
+            String query = uri.getQuery();
+            String fragment = uri.getFragment();
+
+            if (host == null) {
+                return urlString;
             }
 
-            return result;
-        } catch (MalformedURLException e) {
+            Integer defaultPort = getDefaultPortByScheme(scheme);
+
+            // 如果是默认端口，则移除
+            if (defaultPort != null && port == defaultPort) {
+                port = -1;
+            }
+
+            if (path == null || path.isEmpty()) {
+                path = "/";
+            }
+
+            URI newUri = new URI(
+                    scheme,
+                    userInfo,
+                    host,
+                    port,
+                    path,
+                    query,
+                    fragment
+            );
+
+            return newUri.toString();
+        } catch (Exception e) {
             e.printStackTrace();
             return urlString;
         }
     }
+
 
 
     /**

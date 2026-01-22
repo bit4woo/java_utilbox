@@ -208,13 +208,13 @@ public class UrlUtils {
             String path = uri.getPath();
 
             if (host == null) {
-                return urlStr; // 非标准 URI（如 jdbc），直接返回
+                return urlStr; // 非标准 URI（如 jdbc）
             }
 
             if (port == -1) {
                 Integer defaultPort = getDefaultPortByScheme(scheme);
                 if (defaultPort != null) {
-                    host = host + ":" + defaultPort;
+                    port = defaultPort; // ✅ 正确：设置 port 参数
                 }
             }
 
@@ -225,8 +225,8 @@ public class UrlUtils {
             URI newUri = new URI(
                     scheme,
                     uri.getUserInfo(),
-                    host,
-                    -1,
+                    host,   // ✅ 纯 host
+                    port,   // ✅ 端口放这里
                     path,
                     uri.getQuery(),
                     uri.getFragment()
@@ -442,10 +442,11 @@ public class UrlUtils {
         //System.out.println(url2.split("#")[0]);
 
         //System.out.println(grepUrls(ccc));
-        System.out.println(grepUrlsInQuotes(ccc));
-        System.out.println(grepUrls(ccc));
-        System.out.println(grepUrlsWithProtocol(ccc));
-        System.out.println(removeUrlDefaultPort(url3));
+//        System.out.println(grepUrlsInQuotes(ccc));
+//        System.out.println(grepUrls(ccc));
+//        System.out.println(grepUrlsWithProtocol(ccc));
+//        System.out.println(removeUrlDefaultPort(url3));
+        System.out.println(getFullUrlWithDefaultPort("http://47.99.181.60:94"));
         //System.out.println(grepURL1(ccc));
     }
 

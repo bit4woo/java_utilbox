@@ -222,11 +222,19 @@ public class UrlUtils {
                 path = "/";
             }
 
+            String authority = host;
+
+            if (port != -1) {
+                authority = host + ":" + port;
+            }
+
+            if (uri.getUserInfo() != null) {
+                authority = uri.getUserInfo() + "@" + authority;
+            }
+            
             URI newUri = new URI(
                     scheme,
-                    uri.getUserInfo(),
-                    host,   // ✅ 纯 host
-                    port,   // ✅ 端口放这里
+                    authority,
                     path,
                     uri.getQuery(),
                     uri.getFragment()
@@ -446,7 +454,8 @@ public class UrlUtils {
 //        System.out.println(grepUrls(ccc));
 //        System.out.println(grepUrlsWithProtocol(ccc));
 //        System.out.println(removeUrlDefaultPort(url3));
-        System.out.println(getFullUrlWithDefaultPort("http://47.99.181.60:94"));
+//        System.out.println(getFullUrlWithDefaultPort("http://47.99.181.60:94"));
+        System.out.println(getFullUrlWithDefaultPort("https://example.com/"));
         //System.out.println(grepURL1(ccc));
     }
 

@@ -88,7 +88,7 @@ public class IPAddressUtils {
             }
 
             // 检查IP地址的范围
-            if (ipParts[0] == 10 ||
+            if (ipParts[0] == 10 || ipParts[0] == 127 ||
                     (ipParts[0] == 172 && ipParts[1] >= 16 && ipParts[1] < 32) ||
                     (ipParts[0] == 192 && ipParts[1] == 168) ||
                     (ipParts[0] == 169 && ipParts[1] == 254)) {

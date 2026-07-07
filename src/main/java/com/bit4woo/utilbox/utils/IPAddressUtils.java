@@ -22,28 +22,22 @@ import inet.ipaddr.IPAddressString;
  *
  */
 public class IPAddressUtils {
-	
-	
-	
-	//和RegexUtils.IP_ADDRESS_STRING一模一样
-    public static final String REGEX_TO_GREP_IP_ADDRESS_STRING_NO_PORT =
-            "((25[0-5]|2[0-4][0-9]|[0-1][0-9]{2}|[1-9][0-9]|[1-9])\\.(25[0-5]|2[0-4]"
-                    + "[0-9]|[0-1][0-9]{2}|[1-9][0-9]|[1-9]|0)\\.(25[0-5]|2[0-4][0-9]|[0-1]"
-                    + "[0-9]{2}|[1-9][0-9]|[1-9]|0)\\.(25[0-5]|2[0-4][0-9]|[0-1][0-9]{2}"
-                    + "|[1-9][0-9]|[0-9]))";
-    
-    //private static final String Port_base_regex = "(?::\\d{1,5})?";
-  	private static final String Port_base_regex = "(:\\d{1,5})?";
-  	
-    public static final String REGEX_TO_GREP_IP_ADDRESS_STRING_MAY_WITH_PORT =
-            REGEX_TO_GREP_IP_ADDRESS_STRING_NO_PORT + Port_base_regex;
-    
-    
+
+    // 和RegexUtils.IP_ADDRESS_STRING一模一样
+    public static final String REGEX_TO_GREP_IP_ADDRESS_STRING_NO_PORT = "((25[0-5]|2[0-4][0-9]|[0-1][0-9]{2}|[1-9][0-9]|[1-9])\\.(25[0-5]|2[0-4]"
+            + "[0-9]|[0-1][0-9]{2}|[1-9][0-9]|[1-9]|0)\\.(25[0-5]|2[0-4][0-9]|[0-1]"
+            + "[0-9]{2}|[1-9][0-9]|[1-9]|0)\\.(25[0-5]|2[0-4][0-9]|[0-1][0-9]{2}" + "|[1-9][0-9]|[0-9]))";
+
+    // private static final String Port_base_regex = "(?::\\d{1,5})?";
+    private static final String Port_base_regex = "(:\\d{1,5})?";
+
+    public static final String REGEX_TO_GREP_IP_ADDRESS_STRING_MAY_WITH_PORT = REGEX_TO_GREP_IP_ADDRESS_STRING_NO_PORT
+            + Port_base_regex;
+
     public static final String REGEX_TO_GREP_SUBNET = "\\d{1,3}(?:\\.\\d{1,3}){3}(?:/\\d{1,2})?";
 
     /**
-     * 判断是否是合格的IPv4格式
-     * 支持 11.02.03.04的格式
+     * 判断是否是合格的IPv4格式 支持 11.02.03.04的格式
      *
      * @param ip
      * @return
@@ -70,7 +64,7 @@ public class IPAddressUtils {
             }
         }
 
-        //TODO check
+        // TODO check
         return !ip.endsWith(".");
     }
 
@@ -88,10 +82,8 @@ public class IPAddressUtils {
             }
 
             // 检查IP地址的范围
-            if (ipParts[0] == 10 || ipParts[0] == 127 ||
-                    (ipParts[0] == 172 && ipParts[1] >= 16 && ipParts[1] < 32) ||
-                    (ipParts[0] == 192 && ipParts[1] == 168) ||
-                    (ipParts[0] == 169 && ipParts[1] == 254)) {
+            if (ipParts[0] == 10 || ipParts[0] == 127 || (ipParts[0] == 172 && ipParts[1] >= 16 && ipParts[1] < 32)
+                    || (ipParts[0] == 192 && ipParts[1] == 168) || (ipParts[0] == 169 && ipParts[1] == 254)) {
                 return true;
             }
         } catch (Exception ex) {
@@ -104,7 +96,6 @@ public class IPAddressUtils {
     public static boolean isPublicIPv4NoPort(String ipAddress) {
         return isValidIPv4NoPort(ipAddress) && !isPrivateIPv4NoPort(ipAddress);
     }
-
 
     /**
      * 是否是有效的端口
@@ -124,11 +115,9 @@ public class IPAddressUtils {
         return false;
     }
 
-
     public static boolean isValidPort(int portInt) {
         return portInt >= 0 && portInt <= 65535;
     }
-
 
     private static String[] parseIPAndPort(String input) {
         if (StringUtils.isEmpty(input)) {
@@ -147,11 +136,8 @@ public class IPAddressUtils {
     }
 
     /**
-     * 可以包含IP，也可以不包含
-     * 校验字符串是否是一个合格的IP地址
-     * 会发现如下类型的IP，是有效的IP地址，但是实际情况却不会有人这么写。
-     * 应当从我们的正则中剔除
-     * PING 181.002.245.007 (181.2.245.7): 56 data bytes
+     * 可以包含IP，也可以不包含 校验字符串是否是一个合格的IP地址 会发现如下类型的IP，是有效的IP地址，但是实际情况却不会有人这么写。
+     * 应当从我们的正则中剔除 PING 181.002.245.007 (181.2.245.7): 56 data bytes
      *
      * @param ip
      * @return
@@ -195,9 +181,9 @@ public class IPAddressUtils {
         }
     }
 
-
     public static boolean isValidSubnet(String subnet) {
-        if (subnet == null) return false;
+        if (subnet == null)
+            return false;
         subnet = subnet.replaceAll(" ", "");
 
         if (subnet.contains("/")) {
@@ -233,7 +219,6 @@ public class IPAddressUtils {
         return false;
     }
 
-
     public static long ipToLong(String ipAddress) {
         String[] ipParts = ipAddress.split("\\.");
         long ipLong = 0;
@@ -243,7 +228,6 @@ public class IPAddressUtils {
         return ipLong;
     }
 
-
     public static Set<String> toClassCSubNets(Set<String> IPSet) {
         Set<String> subNets = new HashSet<>();
         for (String ip : IPSet) {
@@ -251,7 +235,7 @@ public class IPAddressUtils {
             if (isValidIPv4NoPort(ip)) {
                 String subnet = ip.substring(0, ip.lastIndexOf(".")) + ".0/24";
                 subNets.add(subnet);
-            } else if (isValidSubnet(ip)) {//这里的IP也可能是网段，不要被参数名称限定了
+            } else if (isValidSubnet(ip)) {// 这里的IP也可能是网段，不要被参数名称限定了
                 subNets.add(ip);
             }
         }
@@ -264,12 +248,12 @@ public class IPAddressUtils {
     public static Set<String> toSmallerSubNets(Set<String> IPSet) {
         Set<String> subNets = toClassCSubNets(IPSet);
         Set<String> smallSubNets = new HashSet<>();
-        for (String CNet : subNets) {//把所有IP按照C段进行分类
+        for (String CNet : subNets) {// 把所有IP按照C段进行分类
             SubnetUtils net = new SubnetUtils(CNet);
             Set<String> tmpIPSet = new HashSet<>();
             for (String ip : IPSet) {
                 ip = ipClean(ip);
-                if (isValidSubnet(ip)) {//这里的IP也可能是网段，不要被参数名称限定了
+                if (isValidSubnet(ip)) {// 这里的IP也可能是网段，不要被参数名称限定了
                     smallSubNets.add(ip);
                     continue;
                 }
@@ -277,14 +261,15 @@ public class IPAddressUtils {
                     continue;
                 }
 
-                if (net.getInfo().isInRange(ip) || net.getInfo().getBroadcastAddress().equals(ip.trim()) || net.getInfo().getNetworkAddress().equals(ip.trim())) {
-                    //52.74.179.0 ---sometimes .0 address is a real address.
+                if (net.getInfo().isInRange(ip) || net.getInfo().getBroadcastAddress().equals(ip.trim())
+                        || net.getInfo().getNetworkAddress().equals(ip.trim())) {
+                    // 52.74.179.0 ---sometimes .0 address is a real address.
                     tmpIPSet.add(ip);
                 }
-            }//每个tmpIPSet就是一个C段的IP集合
+            } // 每个tmpIPSet就是一个C段的IP集合
             String tmpSmallNet = ipSetToCIDR(tmpIPSet);
             if (StringUtils.isNotEmpty(tmpSmallNet)) {
-                smallSubNets.add(tmpSmallNet);//把一个C段中的多个IP计算出其CIDR，即更小的网段
+                smallSubNets.add(tmpSmallNet);// 把一个C段中的多个IP计算出其CIDR，即更小的网段
             }
         }
         return smallSubNets;
@@ -292,7 +277,7 @@ public class IPAddressUtils {
     }
 
     /*
-    To get a smaller network with a set of IP addresses
+     * To get a smaller network with a set of IP addresses
      */
     private static String ipSetToCIDR(Set<String> IPSet) {
         try {
@@ -305,7 +290,7 @@ public class IPAddressUtils {
             List<String> list = new ArrayList<>(IPSet);
             SubnetUtils oldsamllerNetwork = new SubnetUtils(list.get(0).trim() + "/24");
             for (int mask = 24; mask <= 32; mask++) {
-                //System.out.println(mask);
+                // System.out.println(mask);
                 SubnetUtils samllerNetwork = new SubnetUtils(list.get(0).trim() + "/" + mask);
                 for (String ip : IPSet) {
                     ip = ipClean(ip);
@@ -313,8 +298,10 @@ public class IPAddressUtils {
                         System.out.println(ip + "invalid IP address, skip to handle it!");
                         continue;
                     }
-                    if (samllerNetwork.getInfo().isInRange(ip) || samllerNetwork.getInfo().getBroadcastAddress().equals(ip.trim()) || samllerNetwork.getInfo().getNetworkAddress().equals(ip.trim())) {
-                        //52.74.179.0 ---sometimes .0 address is a real address.
+                    if (samllerNetwork.getInfo().isInRange(ip)
+                            || samllerNetwork.getInfo().getBroadcastAddress().equals(ip.trim())
+                            || samllerNetwork.getInfo().getNetworkAddress().equals(ip.trim())) {
+                        // 52.74.179.0 ---sometimes .0 address is a real address.
                         continue;
                     } else {
                         String networkaddress = oldsamllerNetwork.getInfo().getNetworkAddress();
@@ -353,36 +340,43 @@ public class IPAddressUtils {
         List<String> IPList = new ArrayList<String>();
         try {
             if (subnet.contains(":")) {
-                return IPList;//暂时先不处理IPv6,需要研究一下
-                //TODO
+                return IPList;// 暂时先不处理IPv6,需要研究一下
+                // TODO
             }
             if (subnet.contains("/")) {
                 SubnetUtils net = new SubnetUtils(subnet);
                 SubnetInfo xx = net.getInfo();
                 String[] ips = xx.getAllAddresses();
-                IPList.add(xx.getNetworkAddress());//.0
+                IPList.add(xx.getNetworkAddress());// .0
                 IPList.addAll(Arrays.asList(ips));
-                IPList.add(xx.getBroadcastAddress());//.255
-            } else if (subnet.contains("-")) {//178.170.186.0-178.170.186.255
+                IPList.add(xx.getBroadcastAddress());// .255
+            } else if (subnet.contains("-")) {
+                // 178.170.186.0-178.170.186.255
+                // 178.170.186.0-255
                 String[] ips = subnet.split("-");
                 if (ips.length == 2) {
                     String startip = ips[0].trim();
                     String endip = ips[1].trim();
-                    //System.out.println(startip);
-                    //System.out.println(endip);
-                    IPAddressString string1 = new IPAddressString(startip);
-                    IPAddressString string2 = new IPAddressString(endip);
-                    IPAddress addr1 = string1.getAddress();
-                    IPAddress addr2 = string2.getAddress();
-                    IPAddressSeqRange range = addr1.toSequentialRange(addr2);
-                    Iterator<? extends IPAddress> it = range.iterator();
-                    while (it.hasNext()) {
-                        IPAddress item = it.next();
-                        //System.out.println(item.toString());
-                        IPList.add(item.toString());
+                    if (!endip.contains(".")) {
+                        endip = startip.substring(0, startip.lastIndexOf(".")) + "." + endip;
+                    }
+                    // System.out.println(startip);
+                    // System.out.println(endip);
+                    if (isValidIPv4NoPort(startip) && isValidIPv4NoPort(endip)) {
+                        IPAddressString string1 = new IPAddressString(startip);
+                        IPAddressString string2 = new IPAddressString(endip);
+                        IPAddress addr1 = string1.getAddress();
+                        IPAddress addr2 = string2.getAddress();
+                        IPAddressSeqRange range = addr1.toSequentialRange(addr2);
+                        Iterator<? extends IPAddress> it = range.iterator();
+                        while (it.hasNext()) {
+                            IPAddress item = it.next();
+                            // System.out.println(item.toString());
+                            IPList.add(item.toString());
+                        }
                     }
                 }
-            } else { //单IP
+            } else { // 单IP
                 IPList.add(subnet);
             }
         } catch (Exception e) {
@@ -437,7 +431,6 @@ public class IPAddressUtils {
     public static List<String> grepIPv4MayPort(String text) {
         return TextUtils.grepWithRegex(text, REGEX_TO_GREP_IP_ADDRESS_STRING_MAY_WITH_PORT);
     }
-
 
     public static List<String> grepPrivateIPv4NoPort(String text) {
         List<String> result = new ArrayList<>();
@@ -519,11 +512,9 @@ public class IPAddressUtils {
             String prefix = firstBlock.substring(0, 2);
 
             // 检查IPv6地址的范围
-            if (firstBlock.equals("fe80") ||
-                    firstBlock.equals("fc00") ||
-                    firstBlock.equals("fd00") ||
-                    (prefix.equals("fc") && firstBlock.length() >= 4) ||
-                    (prefix.equals("fd") && firstBlock.length() >= 4)) {
+            if (firstBlock.equals("fe80") || firstBlock.equals("fc00") || firstBlock.equals("fd00")
+                    || (prefix.equals("fc") && firstBlock.length() >= 4)
+                    || (prefix.equals("fd") && firstBlock.length() >= 4)) {
                 return true;
             }
         } catch (Exception ex) {
@@ -532,7 +523,6 @@ public class IPAddressUtils {
 
         return false;
     }
-
 
     public static boolean isValidIPv6(String ipAddress) {
         if (ipAddress == null || ipAddress.isEmpty()) {
@@ -545,7 +535,6 @@ public class IPAddressUtils {
         Matcher matcher = pattern.matcher(ipAddress);
         return matcher.matches();
     }
-
 
     public static void test3() {
         Set<String> a = new HashSet<String>();
@@ -566,6 +555,6 @@ public class IPAddressUtils {
 //        test3();
         List<String> iplist = IPAddressUtils.grepIPv4MayPort("https://104.17.174.7:2096");
         System.out.println(iplist);
-        
+
     }
 }

@@ -227,7 +227,7 @@ public class DomainUtils {
                 }
             } else if (lookup.getResult() == Lookup.TRY_AGAIN) {
                 if (resolver == null) {
-                    System.out.println("DNS Query Failed with default server, try with 8.8.8.8");
+                	//System.out.println("DNS Query Failed with default server, try with 8.8.8.8");
                     return dnsQuery(domain, "8.8.8.8");
                 }
                 if (server.equals("8.8.8.8")) {

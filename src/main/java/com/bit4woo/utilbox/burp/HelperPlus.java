@@ -591,6 +591,12 @@ public class HelperPlus {
 		try {
 			return new URL(tmpurl);
 		} catch (MalformedURLException e) {
+			// 某些请求(如Burp Collaborator回调)analyzeRequest.getUrl()会返回无scheme的"host:port"，
+			// 导致new URL抛MalformedURLException。退化为用IHttpService(明确含protocol/host/port)重建base URL。
+			URL base = getBaseURL(messageInfo);
+			if (base != null) {
+				return base;
+			}
 			e.printStackTrace();
 			return null;
 		}
@@ -605,6 +611,15 @@ public class HelperPlus {
 		try {
 			return new URL(tmpurl);
 		} catch (MalformedURLException e) {
+			// 同上：无scheme时退化为用IHttpService重建base URL。
+			String baseStr = getBaseURL(httpService);
+			if (baseStr != null) {
+				try {
+					return new URL(baseStr);
+				} catch (MalformedURLException e2) {
+					e2.printStackTrace();
+				}
+			}
 			e.printStackTrace();
 			return null;
 		}
@@ -648,7 +663,7 @@ public class HelperPlus {
 
 			if (port == -1) {
 				String newHost = url.getHost() + ":" + url.getDefaultPort();
-				urlStr = urlStr.replaceFirst(host, newHost);
+				urlStr = urlStr.replaceFirst(Pattern.quote(host), Matcher.quoteReplacement(newHost));
 			}
 
 			if (path.equals("")) {
@@ -682,7 +697,8 @@ public class HelperPlus {
 			if ((port == 80 && protocol.equalsIgnoreCase("http"))
 					|| (port == 443 && protocol.equalsIgnoreCase("https"))) {
 				String oldHost = url.getHost() + ":" + url.getPort();
-				urlString = urlString.replaceFirst(oldHost, host);
+				// replaceFirst 的第一个参数是正则，host 里含 "." 等正则元字符，必须转义，否则可能误替换
+				urlString = urlString.replaceFirst(Pattern.quote(oldHost), Matcher.quoteReplacement(host));
 			}
 
 			if (path.equals("")) {

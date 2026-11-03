@@ -2,10 +2,12 @@ package com.bit4woo.utilbox.burp;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -56,36 +58,127 @@ import burp.IResponseInfo;
  */
 
 public class HelperPlus {
-	private static IExtensionHelpers helpers;
-	private final static String Header_Spliter = ":";
-	private final static String Header_Connector = ": ";//contains space
 
-	public HelperPlus(IExtensionHelpers helpers) {
-		HelperPlus.helpers = helpers;
-	}
+    /**
+     * 历史设计: 本类工具方法全是 static, 而 Burp 的 IExtensionHelpers 只能通过构造函数注入到静态字段。
+     * 副作用是"必须先 new 过一次 HelperPlus(callbacks.getHelpers())", 静态方法才能用,
+     * 否则 helpers.analyzeRequest(...) 直接 NPE, 而且堆栈指不到根因(排查成本很高)。
+     *
+     * 为了不破坏已有调用方, 这里保留静态注入, 但补齐:
+     *   1. volatile: 多线程下可见;
+     *   2. setHelpers()/getHelpers(): 显式初始化入口(不方便 new 实例时用);
+     *   3. requireHelpers(): 未初始化时抛出带修复建议的 IllegalStateException;
+     *   4. 取 header/body 分界位置的方法在没有 helpers 时退化为按字节查找。
+     */
+    private static volatile IExtensionHelpers helpers;
+
+    private final static String Header_Spliter = ":";
+    private final static String Header_Connector = ": ";//contains space
+
+    /** header 与 body 的分界标记: CR LF CR LF (13,10,13,10) */
+    private final static byte[] HEADER_END = new byte[]{13, 10, 13, 10};
+
+    /** CRLF 字面量; 拿它当 split 的分隔符时不含正则元字符, 可直接使用 */
+    private final static String CRLF = String.valueOf(new char[]{13, 10});
+
+    public HelperPlus(IExtensionHelpers helpers) {
+        if (helpers != null) {
+            HelperPlus.helpers = helpers;
+        }
+    }
+
+    /** 显式初始化入口, 给不方便 new 实例的场景用 */
+    public static void setHelpers(IExtensionHelpers extensionHelpers) {
+        if (extensionHelpers != null) {
+            HelperPlus.helpers = extensionHelpers;
+        }
+    }
+
+    public static IExtensionHelpers getHelpers() {
+        return helpers;
+    }
+
+    /** 需要 helpers 的方法统一走这里: 未初始化时给出可操作的错误信息, 而不是裸 NPE */
+    private static IExtensionHelpers requireHelpers() {
+        IExtensionHelpers current = helpers;
+        if (current == null) {
+            throw new IllegalStateException(
+                    "HelperPlus is not initialized: call 'new HelperPlus(callbacks.getHelpers())' "
+                            + "or 'HelperPlus.setHelpers(callbacks.getHelpers())' once at extension startup");
+        }
+        return current;
+    }
+
+    /**
+     * 取 "Name: value" 行里的 Name; 不是 header 行(没有冒号)返回 null。
+     * 用 indexOf 而不是 String.split, 避免每次调用都编译一次正则(扫描器里调用量很大)。
+     */
+    private static String headerNameOf(String headerLine) {
+        if (headerLine == null) {
+            return null;
+        }
+        int idx = headerLine.indexOf(Header_Spliter);
+        if (idx <= 0) {
+            return null;
+        }
+        return headerLine.substring(0, idx).trim();
+    }
+
+    /** 空安全的 containsIgnoreCase */
+    private static boolean containsIgnoreCase(String content, String keyword) {
+        return content != null && keyword != null && content.toLowerCase(Locale.ROOT).contains(keyword);
+    }
 
 	/**
 	 * 返回HTTP请求或响应的整个header头部分，与body相对应
 	 */
 	public static String getHeadersAsStr(boolean isRequest, byte[] requestOrResponse) {
-		if (requestOrResponse == null) {
-			return "";
-		}
-		int bodyOffset = -1;
-		if (helpers != null) {
-			if (isRequest) {
-				IRequestInfo analyzeRequest = helpers.analyzeRequest(requestOrResponse);
-				bodyOffset = analyzeRequest.getBodyOffset();
-			} else {
-				IResponseInfo analyzeResponse = helpers.analyzeResponse(requestOrResponse);
-				bodyOffset = analyzeResponse.getBodyOffset();
-			}
-		}else {
-			bodyOffset = ByteArrayUtils.BytesIndexOf("\r\n\r\n".getBytes(), requestOrResponse);
-		}
+	    if (requestOrResponse == null) {
+	        return "";
+	    }
+	    int headerEnd = bodyOffset(isRequest, requestOrResponse);
+	    // 去掉分界标记本身: 原实现把结尾的 CRLF CRLF 一起返回, 调用方按 CRLF 切分后会多出空行
+	    while (headerEnd > 0) {
+	        byte last = requestOrResponse[headerEnd - 1];
+	        if (last == 13 || last == 10) {          // CR / LF
+	            headerEnd--;
+	        } else {
+	            break;
+	        }
+	    }
+	    // header 是字节流, 固定按 ISO-8859-1 解码(1 字节对应 1 字符, 可无损往返);
+	    // 用默认字符集(中文 Windows 上是 GBK)会把非 ASCII 的 header 值解错
+	    return new String(requestOrResponse, 0, headerEnd, StandardCharsets.ISO_8859_1);
+	}
 
-		byte[] byte_header = Arrays.copyOfRange(requestOrResponse, 0, bodyOffset);//not length-1
-		return new String(byte_header);
+	/**
+	 * 取 header 与 body 的分界位置, 也就是 body 的起始下标。
+	 *
+	 * 有 helpers 时用 Burp 的 analyzeRequest/analyzeResponse, 没有时按字节找 CRLF CRLF。
+	 * 结果统一夹紧到 [0, length]: 空包/畸形包时 getBodyOffset() 可能返回 -1 或大于长度的值,
+	 * 直接拿去 Arrays.copyOfRange 会抛 ArrayIndexOutOfBoundsException / IllegalArgumentException。
+	 */
+	static int bodyOffset(boolean isRequest, byte[] message) {
+	    if (message == null) {
+	        return 0;
+	    }
+	    int offset;
+	    IExtensionHelpers current = helpers;
+	    if (current != null) {
+	        offset = isRequest
+	                ? current.analyzeRequest(message).getBodyOffset()
+	                : current.analyzeResponse(message).getBodyOffset();
+	    } else {
+	        int idx = ByteArrayUtils.BytesIndexOf(HEADER_END, message);
+	        offset = idx < 0 ? message.length : idx + HEADER_END.length;
+	    }
+	    if (offset < 0) {
+	        offset = 0;
+	    }
+	    if (offset > message.length) {
+	        offset = message.length;
+	    }
+	    return offset;
 	}
 
 
@@ -126,21 +219,24 @@ public class HelperPlus {
 	 * 获取请求包或者响应包中的header List
 	 */
 	public static List<String> getHeaderList(boolean IsRequest, byte[] requestOrResponse) {
-		if (null == requestOrResponse) {
-			return new ArrayList<>();
-		}
+	    if (null == requestOrResponse) {
+	        return new ArrayList<>();
+	    }
 
-		if (helpers != null) {
-			if (IsRequest) {
-				IRequestInfo analyzeRequest = helpers.analyzeRequest(requestOrResponse);
-				return analyzeRequest.getHeaders();
-			} else {
-				IResponseInfo analyzeResponse = helpers.analyzeResponse(requestOrResponse);
-				return analyzeResponse.getHeaders();
-			}
-		} else {
-			return new ArrayList<>(Arrays.asList(getHeadersAsStr(IsRequest,requestOrResponse).split("\r\n")));
-		}
+	    IExtensionHelpers current = helpers;
+	    if (current != null) {
+	        List<String> headers = IsRequest
+	                ? current.analyzeRequest(requestOrResponse).getHeaders()
+	                : current.analyzeResponse(requestOrResponse).getHeaders();
+	        // 本类的 addOrUpdate/remove 都是原地修改传入的 List,
+	        // 统一复制一份, 避免 Burp 返回不可变 List 时抛 UnsupportedOperationException
+	        return new ArrayList<>(headers);
+	    }
+	    String headerStr = getHeadersAsStr(IsRequest, requestOrResponse);
+	    if (headerStr.isEmpty()) {
+	        return new ArrayList<>();
+	    }
+	    return new ArrayList<>(Arrays.asList(headerStr.split(CRLF)));
 	}
 
 
@@ -150,38 +246,37 @@ public class HelperPlus {
 	 * @param headerLine header的一整行
 	 */
 	public static List<String> addOrUpdateHeader(List<String> headers, String headerLine) {
-		if (headerLine.contains(":")) {
-			String[] parts = headerLine.split(Header_Spliter, 2);
-			if (parts.length == 2) {
-				String headerName = parts[0].trim();
-				String headerValue = parts[1].trim();
-				return addOrUpdateHeader(headers, headerName, headerValue);
-			}
-		}
-		return headers;
+	    if (headers == null || headerLine == null) {
+	        return headers;
+	    }
+	    int idx = headerLine.indexOf(Header_Spliter);
+	    if (idx > 0) {
+	        return addOrUpdateHeader(headers, headerLine.substring(0, idx).trim(),
+	                headerLine.substring(idx + 1).trim());
+	    }
+	    return headers;
 	}
 
 	/**
 	 * 新增或更新header
 	 */
 	public static List<String> addOrUpdateHeader(List<String> headers, String headerName, String headerValue) {
-		Iterator<String> iterator = headers.iterator();
-		while (iterator.hasNext()) {
-			String header = iterator.next();
-			if (header.contains(":")) {
-				String[] parts = header.split(Header_Spliter, 2);//这里的limit=2 可以理解成分割成2份，否则referer可能别分成3份
-				if (parts.length == 2) {
-					String headerNameOrigin = parts[0].trim();
-					if (headerNameOrigin.equalsIgnoreCase(headerName)) {
-						iterator.remove();
-						headers.add(headerName + Header_Connector + headerValue);
-						return headers;
-					}
-				}
-			}
-		}
-		headers.add(headerName + Header_Connector + headerValue);
-		return headers;
+	    if (headers == null || headerName == null) {
+	        return headers;
+	    }
+	    String name = headerName.trim();
+	    String newLine = name + Header_Connector + (headerValue == null ? "" : headerValue.trim());
+	    // 从下标 1 开始: 第 0 行是请求行/状态行, 不是 header。
+	    // 原来的 remove + add 会把被更新的 header 挪到列表末尾, 这里原地替换, 保持原有顺序。
+	    for (int i = 1; i < headers.size(); i++) {
+	        String nameOrigin = headerNameOf(headers.get(i));
+	        if (nameOrigin != null && nameOrigin.equalsIgnoreCase(name)) {
+	            headers.set(i, newLine);
+	            return headers;
+	        }
+	    }
+	    headers.add(newLine);
+	    return headers;
 	}
 
 
@@ -207,24 +302,38 @@ public class HelperPlus {
 	 * 更改header第一行的请求方式/PATH等
 	 * GET /api/search?q=aaa HTTP/1.1
 	 */
-	public static List<String> updateFirstLineOfHeaders(List<String> headers,String method,String path,String httpVersion){
-		String[] methodAndPath = headers.get(0).split(" ");//会得到三部分
-		if(method!=null){
-			methodAndPath[0] = method;
-		}
-		
-		if(path!=null){
-			methodAndPath[1] = path;
-		}
-		
-		if(httpVersion!=null){
-			methodAndPath[2] = httpVersion;
-		}
-		
-		String methodAndPathNew = String.join(" ", methodAndPath);
-		//System.out.println(methodAndPathNew);
-		headers.set(0,methodAndPathNew);
-		return headers;
+	public static List<String> updateFirstLineOfHeaders(List<String> headers, String method, String path, String httpVersion) {
+	    if (headers == null || headers.isEmpty()) {
+	        return headers;
+	    }
+	    // 原实现 split(" ") 后直接取下标的 [0][1][2]:
+	    //   - 请求行只有两段(如 "GET /")时抛 ArrayIndexOutOfBoundsException;
+	    //   - 中间有连续空格时会多出空段, String.join 拼回去把请求行搞坏。
+	    // 这里先把空格/TAB 折叠成单个空格, 再切分; 缺段用默认值补齐。
+	    String firstLine = headers.get(0) == null ? "" : headers.get(0).trim();
+	    StringBuilder normalized = new StringBuilder();
+	    boolean lastWasSpace = false;
+	    for (int i = 0; i < firstLine.length(); i++) {
+	        char c = firstLine.charAt(i);
+	        if (c == ' ' || c == 9) {                 // 9 == TAB
+	            if (!lastWasSpace) {
+	                normalized.append(' ');
+	            }
+	            lastWasSpace = true;
+	        } else {
+	            normalized.append(c);
+	            lastWasSpace = false;
+	        }
+	    }
+	    String[] parts = normalized.toString().split(" ");
+
+	    String newMethod = method != null ? method
+	            : (parts.length > 0 && !parts[0].isEmpty() ? parts[0] : "GET");
+	    String newPath = path != null ? path : (parts.length > 1 ? parts[1] : "/");
+	    String newVersion = httpVersion != null ? httpVersion : (parts.length > 2 ? parts[2] : "HTTP/1.1");
+
+	    headers.set(0, newMethod + " " + newPath + " " + newVersion);
+	    return headers;
 	}
 
 
@@ -332,18 +441,37 @@ public class HelperPlus {
 	 * 删除header
 	 */
 	public static List<String> removeHeader(List<String> headers, String headerNameOrHeaderLine) {
-		Iterator<String> it = headers.iterator();
-		while (it.hasNext()) {
-			String header = it.next();
-			String headerName = header.split(Header_Spliter, 2)[0].trim();
-			if (headerNameOrHeaderLine.length() >= headerName.length()) {
-				//至少要匹配head头
-				if (header.toLowerCase().startsWith(headerNameOrHeaderLine.toLowerCase().trim())) {
-					it.remove();
-				}
-			}
-		}
-		return headers;
+	    if (headers == null || headerNameOrHeaderLine == null) {
+	        return headers;
+	    }
+	    String target = headerNameOrHeaderLine.trim();
+	    // 传整行("Cookie: a=b")就按整行精确删除; 只传名字("Cookie")就按名字删除。
+	    // 原实现是对整行做 startsWith 前缀匹配: removeHeader(headers, "X-Forwarded") 会把
+	    // X-Forwarded-For / X-Forwarded-Host 一起删掉, 语义太宽, 容易误删鉴权相关头。
+	    boolean fullLine = target.indexOf(Header_Spliter) > 0;
+	    String targetName = fullLine ? headerNameOf(target) : target;
+	    if (targetName == null || targetName.isEmpty()) {
+	        return headers;
+	    }
+	    Iterator<String> it = headers.iterator();
+	    boolean first = true;
+	    while (it.hasNext()) {
+	        String header = it.next();
+	        if (first) {
+	            first = false;                       // 第 0 行是请求行/状态行, 永不删
+	            continue;
+	        }
+	        String headerName = headerNameOf(header);
+	        if (headerName == null) {
+	            continue;                            // 续行/畸形行
+	        }
+	        boolean hit = fullLine ? header.trim().equalsIgnoreCase(target)
+	                : headerName.equalsIgnoreCase(targetName);
+	        if (hit) {
+	            it.remove();
+	        }
+	    }
+	    return headers;
 	}
 
 
@@ -450,24 +578,17 @@ public class HelperPlus {
 	 * 获取数据包的body
 	 */
 	public static byte[] getBody(boolean isRequest, byte[] requestOrResponse) {
-		if (requestOrResponse == null) {
-			return null;
-		}
-		int bodyOffset = -1;
-
-		if (helpers != null) {
-			if (isRequest) {
-				IRequestInfo analyzeRequest = helpers.analyzeRequest(requestOrResponse);
-				bodyOffset = analyzeRequest.getBodyOffset();
-			} else {
-				IResponseInfo analyzeResponse = helpers.analyzeResponse(requestOrResponse);
-				bodyOffset = analyzeResponse.getBodyOffset();
-			}
-		} else {
-			bodyOffset = ByteArrayUtils.BytesIndexOf("\r\n\r\n".getBytes(), requestOrResponse);
-			bodyOffset = bodyOffset + 4;
-		}
-		return Arrays.copyOfRange(requestOrResponse, bodyOffset, requestOrResponse.length);
+	    // 返回空数组而不是 null: 调用方常用的 new String(getBody(...)) 就不会 NPE;
+	    // 传给 buildHttpMessage(headers, body) 时空数组等价于"没有 body"。
+	    if (requestOrResponse == null) {
+	        return new byte[0];
+	    }
+	    // 原实现的两个坑:
+	    //   1. 包里没有 CRLF CRLF 时 BytesIndexOf 返回 -1, +4 得到 3, 会把 header 当成 body 返回;
+	    //   2. 分界位置超过包长度时 Arrays.copyOfRange 直接抛异常。
+	    // bodyOffset() 内部已把结果夹紧到 [0, length]。
+	    int offset = bodyOffset(isRequest, requestOrResponse);
+	    return Arrays.copyOfRange(requestOrResponse, offset, requestOrResponse.length);
 	}
 
 
@@ -475,9 +596,9 @@ public class HelperPlus {
 	 * 获取数据包的body
 	 */
 	public static byte[] getBody(boolean messageIsRequest, IHttpRequestResponse messageInfo) {
-		if (messageInfo == null) {
-			return null;
-		}
+	    if (messageInfo == null) {
+	        return new byte[0];
+	    }
 		byte[] requestOrResponse = null;
 		if (messageIsRequest) {
 			requestOrResponse = messageInfo.getRequest();
@@ -538,14 +659,25 @@ public class HelperPlus {
 	 * @return http://www.baidu.com/  不包含默认端口；包含默认path(/)
 	 */
 	public static String getBaseURL(IHttpService service) {
-		//String shortUrlString = messageInfo.getHttpService().toString();//http://www.baidu.com
-		//新版本burp中，API发生了变化，返回结果是这种burp.Ze6r@7f06cf44/
-		if (service == null) {
-			return null;
-		}
-		String shortUrlString = service.getProtocol() + "://" + service.getHost() + ":" + service.getPort() + "/";
-		shortUrlString = removeUrlDefaultPort(shortUrlString);
-		return shortUrlString;
+	    // 不要用 service.toString(): 新版 Burp 返回的是 Object 默认实现(burp.Ze6r@7f06cf44/)
+	    if (service == null) {
+	        return null;
+	    }
+	    // IPv6 字面量必须加方括号, 否则 http://::1:8080/ 不是合法 URL
+	    String shortUrlString = service.getProtocol() + "://" + hostForUrl(service.getHost())
+	            + ":" + service.getPort() + "/";
+	    return removeUrlDefaultPort(shortUrlString);
+	}
+
+	/** IPv6 字面量需要加方括号才能拼进 URL */
+	private static String hostForUrl(String host) {
+	    if (host == null) {
+	        return "";
+	    }
+	    if (host.indexOf(':') >= 0 && !host.startsWith("[")) {
+	        return "[" + host + "]";
+	    }
+	    return host;
 	}
 
 	/**

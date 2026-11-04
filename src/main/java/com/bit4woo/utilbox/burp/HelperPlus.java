@@ -59,75 +59,75 @@ import burp.IResponseInfo;
 
 public class HelperPlus {
 
-    /**
-     * 历史设计: 本类工具方法全是 static, 而 Burp 的 IExtensionHelpers 只能通过构造函数注入到静态字段。
-     * 副作用是"必须先 new 过一次 HelperPlus(callbacks.getHelpers())", 静态方法才能用,
-     * 否则 helpers.analyzeRequest(...) 直接 NPE, 而且堆栈指不到根因(排查成本很高)。
-     *
-     * 为了不破坏已有调用方, 这里保留静态注入, 但补齐:
-     *   1. volatile: 多线程下可见;
-     *   2. setHelpers()/getHelpers(): 显式初始化入口(不方便 new 实例时用);
-     *   3. requireHelpers(): 未初始化时抛出带修复建议的 IllegalStateException;
-     *   4. 取 header/body 分界位置的方法在没有 helpers 时退化为按字节查找。
-     */
-    private static volatile IExtensionHelpers helpers;
+	/**
+	 * 历史设计: 本类工具方法全是 static, 而 Burp 的 IExtensionHelpers 只能通过构造函数注入到静态字段。
+	 * 副作用是"必须先 new 过一次 HelperPlus(callbacks.getHelpers())", 静态方法才能用,
+	 * 否则 helpers.analyzeRequest(...) 直接 NPE, 而且堆栈指不到根因(排查成本很高)。
+	 *
+	 * 为了不破坏已有调用方, 这里保留静态注入, 但补齐:
+	 *   1. volatile: 多线程下可见;
+	 *   2. setHelpers()/getHelpers(): 显式初始化入口(不方便 new 实例时用);
+	 *   3. requireHelpers(): 未初始化时抛出带修复建议的 IllegalStateException;
+	 *   4. 取 header/body 分界位置的方法在没有 helpers 时退化为按字节查找。
+	 */
+	private static volatile IExtensionHelpers helpers;
 
-    private final static String Header_Spliter = ":";
-    private final static String Header_Connector = ": ";//contains space
+	private final static String Header_Spliter = ":";
+	private final static String Header_Connector = ": ";//contains space
 
-    /** header 与 body 的分界标记: CR LF CR LF (13,10,13,10) */
-    private final static byte[] HEADER_END = new byte[]{13, 10, 13, 10};
+	/** header 与 body 的分界标记: CR LF CR LF (13,10,13,10) */
+	private final static byte[] HEADER_END = new byte[]{13, 10, 13, 10};
 
-    /** CRLF 字面量; 拿它当 split 的分隔符时不含正则元字符, 可直接使用 */
-    private final static String CRLF = String.valueOf(new char[]{13, 10});
+	/** CRLF 字面量; 拿它当 split 的分隔符时不含正则元字符, 可直接使用 */
+	private final static String CRLF = String.valueOf(new char[]{13, 10});
 
-    public HelperPlus(IExtensionHelpers helpers) {
-        if (helpers != null) {
-            HelperPlus.helpers = helpers;
-        }
-    }
+	public HelperPlus(IExtensionHelpers helpers) {
+		if (helpers != null) {
+			HelperPlus.helpers = helpers;
+		}
+	}
 
-    /** 显式初始化入口, 给不方便 new 实例的场景用 */
-    public static void setHelpers(IExtensionHelpers extensionHelpers) {
-        if (extensionHelpers != null) {
-            HelperPlus.helpers = extensionHelpers;
-        }
-    }
+	/** 显式初始化入口, 给不方便 new 实例的场景用 */
+	public static void setHelpers(IExtensionHelpers extensionHelpers) {
+		if (extensionHelpers != null) {
+			HelperPlus.helpers = extensionHelpers;
+		}
+	}
 
-    public static IExtensionHelpers getHelpers() {
-        return helpers;
-    }
+	public static IExtensionHelpers getHelpers() {
+		return helpers;
+	}
 
-    /** 需要 helpers 的方法统一走这里: 未初始化时给出可操作的错误信息, 而不是裸 NPE */
-    private static IExtensionHelpers requireHelpers() {
-        IExtensionHelpers current = helpers;
-        if (current == null) {
-            throw new IllegalStateException(
-                    "HelperPlus is not initialized: call 'new HelperPlus(callbacks.getHelpers())' "
-                            + "or 'HelperPlus.setHelpers(callbacks.getHelpers())' once at extension startup");
-        }
-        return current;
-    }
+	/** 需要 helpers 的方法统一走这里: 未初始化时给出可操作的错误信息, 而不是裸 NPE */
+	private static IExtensionHelpers requireHelpers() {
+		IExtensionHelpers current = helpers;
+		if (current == null) {
+			throw new IllegalStateException(
+					"HelperPlus is not initialized: call 'new HelperPlus(callbacks.getHelpers())' "
+							+ "or 'HelperPlus.setHelpers(callbacks.getHelpers())' once at extension startup");
+		}
+		return current;
+	}
 
-    /**
-     * 取 "Name: value" 行里的 Name; 不是 header 行(没有冒号)返回 null。
-     * 用 indexOf 而不是 String.split, 避免每次调用都编译一次正则(扫描器里调用量很大)。
-     */
-    private static String headerNameOf(String headerLine) {
-        if (headerLine == null) {
-            return null;
-        }
-        int idx = headerLine.indexOf(Header_Spliter);
-        if (idx <= 0) {
-            return null;
-        }
-        return headerLine.substring(0, idx).trim();
-    }
+	/**
+	 * 取 "Name: value" 行里的 Name; 不是 header 行(没有冒号)返回 null。
+	 * 用 indexOf 而不是 String.split, 避免每次调用都编译一次正则(扫描器里调用量很大)。
+	 */
+	private static String headerNameOf(String headerLine) {
+		if (headerLine == null) {
+			return null;
+		}
+		int idx = headerLine.indexOf(Header_Spliter);
+		if (idx <= 0) {
+			return null;
+		}
+		return headerLine.substring(0, idx).trim();
+	}
 
-    /** 空安全的 containsIgnoreCase */
-    private static boolean containsIgnoreCase(String content, String keyword) {
-        return content != null && keyword != null && content.toLowerCase(Locale.ROOT).contains(keyword);
-    }
+	/** 空安全的 containsIgnoreCase */
+	private static boolean containsIgnoreCase(String content, String keyword) {
+		return content != null && keyword != null && content.toLowerCase(Locale.ROOT).contains(keyword);
+	}
 
 	/**
 	 * 返回HTTP请求或响应的整个header头部分，与body相对应
@@ -787,25 +787,7 @@ public class HelperPlus {
 	 * @return
 	 */
 	public static String addUrlDefaultPort(String urlStr) {
-		try {
-			URL url = new URL(urlStr);
-			String host = url.getHost();
-			int port = url.getPort();
-			String path = url.getPath();
-
-			if (port == -1) {
-				String newHost = url.getHost() + ":" + url.getDefaultPort();
-				urlStr = urlStr.replaceFirst(Pattern.quote(host), Matcher.quoteReplacement(newHost));
-			}
-
-			if (path.equals("")) {
-				urlStr = urlStr + "/";
-			}
-			return new URL(urlStr).toString();
-		} catch (MalformedURLException e) {
-			e.printStackTrace();
-			return urlStr;
-		}
+	    return rewriteUrl(urlStr, false);
 	}
 
 	/**
@@ -819,28 +801,54 @@ public class HelperPlus {
 	 * https://bit4woo.com:443 ---> https://bit4woo.com/
 	 */
 	public static String removeUrlDefaultPort(String urlString) {
-		try {
-			URL url = new URL(urlString);
-			String protocol = url.getProtocol();
-			String host = url.getHost();
-			int port = url.getPort();//不包含端口时返回-1
-			String path = url.getPath();
+	    return rewriteUrl(urlString, true);
+	}
 
-			if ((port == 80 && protocol.equalsIgnoreCase("http"))
-					|| (port == 443 && protocol.equalsIgnoreCase("https"))) {
-				String oldHost = url.getHost() + ":" + url.getPort();
-				// replaceFirst 的第一个参数是正则，host 里含 "." 等正则元字符，必须转义，否则可能误替换
-				urlString = urlString.replaceFirst(Pattern.quote(oldHost), Matcher.quoteReplacement(host));
-			}
+	/**
+	 * 统一重写 URL 的端口与 path, 替代原来"正则替换字符串再 new URL 解析回来"的写法。
+	 *
+	 * 原写法的问题:
+	 *   1. replaceFirst + Pattern.quote 只是补丁式规避 host 里的正则元字符;
+	 *   2. path 为空时直接在原串尾部拼 "/", URL 带 query 时会拼错: http://h?x=1 会变成 http://h?x=1/;
+	 *   3. 末尾 new URL(...).toString() 会重新规范化, 调用方拿回的不再是自己传进去的那份串。
+	 * 这里改成按 URL 各部件拼回去, 顺序、转义、query/fragment 都确定。
+	 *
+	 * @param dropDefaultPort true: 去掉默认端口(http:80 / https:443); false: 补上默认端口
+	 */
+	private static String rewriteUrl(String urlStr, boolean dropDefaultPort) {
+	    if (urlStr == null || urlStr.isEmpty()) {
+	        return urlStr;
+	    }
+	    URL url;
+	    try {
+	        url = new URL(urlStr);
+	    } catch (MalformedURLException e) {
+	        // 无 scheme 的 "host:port" 之类无法解析, 原样返回, 由调用方决定怎么处理
+	        return urlStr;
+	    }
 
-			if (path.equals("")) {
-				urlString = urlString + "/";
-			}
-			return new URL(urlString).toString();
-		} catch (MalformedURLException e) {
-			e.printStackTrace();
-			return urlString;
-		}
+	    int port = url.getPort();               // 未显式指定端口时为 -1
+	    int defaultPort = url.getDefaultPort(); // 未知协议时为 -1
+	    if (port == -1 && !dropDefaultPort) {
+	        port = defaultPort;
+	    } else if (port != -1 && dropDefaultPort && port == defaultPort) {
+	        port = -1;
+	    }
+
+	    StringBuilder sb = new StringBuilder();
+	    sb.append(url.getProtocol()).append("://").append(hostForUrl(url.getHost()));
+	    if (port != -1) {
+	        sb.append(':').append(port);
+	    }
+	    String path = url.getPath();
+	    sb.append(path == null || path.isEmpty() ? "/" : path);
+	    if (url.getQuery() != null) {
+	        sb.append('?').append(url.getQuery());
+	    }
+	    if (url.getRef() != null) {
+	        sb.append('#').append(url.getRef());
+	    }
+	    return sb.toString();
 	}
 
 
@@ -857,23 +865,22 @@ public class HelperPlus {
 	}
 
 	public short getStatusCode(IHttpRequestResponse messageInfo) {
-		if (messageInfo == null || messageInfo.getResponse() == null) {
-			return -1;
-		}
-		IResponseInfo analyzedResponse = helpers.analyzeResponse(messageInfo.getResponse());
-		return analyzedResponse.getStatusCode();
+	    if (messageInfo == null || messageInfo.getResponse() == null) {
+	        return -1;
+	    }
+	    return getStatusCode(messageInfo.getResponse());     // 复用下面带 try/catch 的实现
 	}
 
+	/** 解析失败(空响应/畸形响应)统一返回 -1, 不向上抛异常 */
 	public short getStatusCode(byte[] response) {
-		if (response == null) {
-			return -1;
-		}
-		try {
-			IResponseInfo analyzedResponse = helpers.analyzeResponse(response);
-			return analyzedResponse.getStatusCode();
-		} catch (Exception e) {
-			return -1;
-		}
+	    if (response == null || response.length == 0) {
+	        return -1;
+	    }
+	    try {
+	        return requireHelpers().analyzeResponse(response).getStatusCode();
+	    } catch (Exception e) {
+	        return -1;
+	    }
 	}
 
 	public List<IParameter> getParameters(IHttpRequestResponse messageInfo) {
@@ -1026,14 +1033,32 @@ public class HelperPlus {
 
 		String contentType = getHeaderValueOf(isRequest, requestOrResponse, "Content-Type");
 
-		//1、尝试从contentTpye中获取
+		//1、尝试从 content-type 中获取
+		//   原实现用 split("charset=")[1]: Content-Type 里只有 charset= 而没有值时会抛
+		//   ArrayIndexOutOfBoundsException; 值后面常跟 "; xxx" 或引号, 一并处理掉。
+		//   另外原来直接 return getCharsetName(...), 遇到不认识的编码名会返回 null,
+		//   而不是继续用 body/meta 兜底判断, 这里改成"取到才返回"。
 		if (contentType != null) {
-			if (contentType.toLowerCase().contains("charset=")) {
-				String tmpcharSet = contentType.toLowerCase().split("charset=")[1];
-				if (StringUtils.isNotEmpty(tmpcharSet)) {
-					return CharsetUtils.getCharsetName(tmpcharSet);
-				}
-			}
+		    int charsetIdx = contentType.toLowerCase(Locale.ROOT).indexOf("charset=");
+		    if (charsetIdx >= 0) {
+		        String tmpcharSet = contentType.substring(charsetIdx + "charset=".length());
+		        int end = tmpcharSet.indexOf(';');
+		        if (end >= 0) {
+		            tmpcharSet = tmpcharSet.substring(0, end);
+		        }
+		        tmpcharSet = tmpcharSet.trim();
+		        if (tmpcharSet.length() >= 2
+		                && tmpcharSet.charAt(0) == '"'
+		                && tmpcharSet.charAt(tmpcharSet.length() - 1) == '"') {
+		            tmpcharSet = tmpcharSet.substring(1, tmpcharSet.length() - 1);
+		        }
+		        if (StringUtils.isNotEmpty(tmpcharSet)) {
+		            String charsetName = CharsetUtils.getCharsetName(tmpcharSet);
+		            if (charsetName != null) {
+		                return charsetName;
+		            }
+		        }
+		    }
 		}
 
 		String charset = detectCharsetInBody(isRequest, requestOrResponse);
@@ -1072,17 +1097,17 @@ public class HelperPlus {
 
 
 	public boolean isJSON(byte[] content, boolean isRequest) {
-		if (isRequest) {
-			IRequestInfo requestInfo = helpers.analyzeRequest(content);
-			return requestInfo.getContentType() == IRequestInfo.CONTENT_TYPE_JSON;
-		} else {
-			IResponseInfo responseInfo = helpers.analyzeResponse(content);
-
-			String dataType = responseInfo.getStatedMimeType().toLowerCase();
-			String inferDataType = responseInfo.getInferredMimeType().toLowerCase();
-
-			return dataType.contains("json") || inferDataType.contains("json");
-		}
+	    if (content == null) {
+	        return false;
+	    }
+	    if (isRequest) {
+	        return requireHelpers().analyzeRequest(content).getContentType() == IRequestInfo.CONTENT_TYPE_JSON;
+	    }
+	    // getStatedMimeType()/getInferredMimeType() 在识别不出时可能返回 null,
+	    // 原实现直接 .toLowerCase() 会 NPE
+	    IResponseInfo responseInfo = requireHelpers().analyzeResponse(content);
+	    return containsIgnoreCase(responseInfo.getStatedMimeType(), "json")
+	            || containsIgnoreCase(responseInfo.getInferredMimeType(), "json");
 	}
 
 	/**
@@ -1093,14 +1118,12 @@ public class HelperPlus {
 	 * @return
 	 */
 	public boolean isHtml(byte[] content, boolean isRequest) {
-		if (isRequest) {
-			return false;
-		} else {
-			IResponseInfo responseInfo = helpers.analyzeResponse(content);
-			String dataType = responseInfo.getStatedMimeType().toLowerCase();
-			String inferDataType = responseInfo.getInferredMimeType().toLowerCase();
-			return dataType.contains("html") || inferDataType.contains("html");
-		}
+	    if (isRequest || content == null) {
+	        return false;
+	    }
+	    IResponseInfo responseInfo = requireHelpers().analyzeResponse(content);
+	    return containsIgnoreCase(responseInfo.getStatedMimeType(), "html")
+	            || containsIgnoreCase(responseInfo.getInferredMimeType(), "html");
 	}
 
 
@@ -1112,19 +1135,22 @@ public class HelperPlus {
 	 * @return
 	 */
 	public boolean isJavaScript(byte[] content, boolean isRequest) {
-		if (isRequest) {
-			return false;
-		} else {
-			IResponseInfo responseInfo = helpers.analyzeResponse(content);
-			String dataType = responseInfo.getStatedMimeType().toLowerCase();
-			String inferDataType = responseInfo.getInferredMimeType().toLowerCase();
-			return dataType.contains("script") || inferDataType.contains("script");
-		}
+	    if (isRequest || content == null) {
+	        return false;
+	    }
+	    IResponseInfo responseInfo = requireHelpers().analyzeResponse(content);
+	    return containsIgnoreCase(responseInfo.getStatedMimeType(), "script")
+	            || containsIgnoreCase(responseInfo.getInferredMimeType(), "script");
 	}
 
 	public String getHTTPBasicCredentials(IHttpRequestResponse messageInfo) throws Exception {
-		String authHeader = getHeaderValueOf(true, messageInfo, "Authorization").trim();
-		String[] parts = authHeader.split("\\s");
+	    String authHeader = getHeaderValueOf(true, messageInfo, "Authorization");
+	    if (authHeader == null) {
+	        // 原实现直接 .trim() 会抛 NPE, 调用方拿到的异常语义还不清楚
+	        throw new Exception("No Authorization header in request");
+	    }
+	    authHeader = authHeader.trim();
+	    String[] parts = authHeader.split("\\s");
 
 		if (parts.length != 2)
 			throw new Exception("Wrong number of HTTP Authorization header parts");
